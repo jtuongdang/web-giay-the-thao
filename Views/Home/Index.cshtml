@@ -1,8 +1,149 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model List<QuanLyBanGiay.Models.ShoeItem>
+@{
+    ViewData["Title"] = "Trang chủ - Bộ sưu tập Giày thể thao chính hãng";
+    var currentBrand = ViewBag.CurrentBrand as string ?? "All";
+    var brands = new[] { "All", "Nike", "Adidas", "Jordan", "Puma" };
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- Hero Athletic Banner -->
+<section class="hero-banner">
+    <div class="container position-relative" style="z-index: 1;">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <span class="badge bg-accent text-uppercase fw-bold px-3 py-2 mb-3">🔥 XU HƯỚNG MÙA MỚI 2026</span>
+                <h1 class="display-3 fw-extrabold text-white mb-3">BỨT PHÁ <br><span class="text-accent">MỌI GIỚI HẠN</span></h1>
+                <p class="lead text-light opacity-75 mb-4 pe-lg-5">
+                    Trải nghiệm bộ sưu tập giày thể thao đỉnh cao từ Nike, Adidas, Jordan và Puma. Đệm êm vượt trội, phong cách thời thượng đón đầu xu hướng.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="#catalog" class="btn btn-accent btn-lg rounded-pill px-4 fw-bold">Khám Phá Ngay</a>
+                    <a href="#brands" class="btn btn-outline-light btn-lg rounded-pill px-4 fw-semibold">Xem Thương Hiệu</a>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block text-center">
+                <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800&auto=format&fit=crop&q=80" 
+                     alt="Air Jordan Showcase" class="img-fluid rounded-4 shadow-lg" 
+                     style="max-height: 380px; object-fit: cover; transform: rotate(-8deg);">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Brand Filter Bar -->
+<section id="catalog" class="container mb-5 pt-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="fw-extrabold fs-3 mb-1">BỘ SƯU TẬP GIÀY THỂ THAO</h2>
+            <p class="text-muted small mb-0">Hiển thị @Model.Count sản phẩm cao cấp chính hãng</p>
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="d-flex flex-wrap gap-2" id="brands">
+            @foreach (var b in brands)
+            {
+                var isActive = currentBrand.Equals(b, StringComparison.OrdinalIgnoreCase);
+                <a asp-action="Index" asp-route-brand="@(b == "All" ? null : b)" 
+                   class="filter-pill @(isActive ? "active" : "")">
+                    @(b == "All" ? "Tất Cả" : b)
+                </a>
+            }
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-emoji-frown fs-1 text-muted"></i>
+            <h4 class="mt-3 fw-bold">Không tìm thấy sản phẩm nào!</h4>
+            <p class="text-muted">Vui lòng thử tìm kiếm với từ khóa khác hoặc chọn xem tất cả sản phẩm.</p>
+            <a asp-action="Index" class="btn btn-accent rounded-pill px-4">Xem tất cả giày</a>
+        </div>
+    }
+    else
+    {
+        <!-- Modern Responsive Shoe Grid -->
+        <div class="shoe-grid">
+            @foreach (var shoe in Model)
+            {
+                <article class="shoe-card">
+                    <div class="shoe-card-media">
+                        @if (shoe.IsNew)
+                        {
+                            <span class="shoe-badge bg-accent text-white">MỚI</span>
+                        }
+                        else if (shoe.OriginalPrice.HasValue)
+                        {
+                            <span class="shoe-badge bg-danger text-white">GIẢM GIÁ</span>
+                        }
+
+                        <img src="@shoe.ImageUrl" alt="@shoe.Name" class="shoe-card-img" loading="lazy" />
+                    </div>
+
+                    <div class="shoe-card-body">
+                        <span class="shoe-brand-tag">@shoe.Brand &bull; @shoe.Category</span>
+                        <h3 class="shoe-title">@shoe.Name</h3>
+
+                        <div class="d-flex align-items-center gap-1 text-warning small mb-2">
+                            @for (int i = 0; i < (int)Math.Floor(shoe.Rating); i++)
+                            {
+                                <i class="bi bi-star-fill"></i>
+                            }
+                            <span class="text-dark fw-bold ms-1">@shoe.Rating.ToString("0.0")</span>
+                            <span class="text-muted">(@shoe.ReviewCount)</span>
+                        </div>
+
+                        <div class="shoe-price-wrap">
+                            <span class="shoe-price">@string.Format("{0:N0} ₫", shoe.Price)</span>
+                            @if (shoe.OriginalPrice.HasValue)
+                            {
+                                <span class="shoe-original-price">@string.Format("{0:N0} ₫", shoe.OriginalPrice.Value)</span>
+                            }
+                        </div>
+
+                        <div class="shoe-sizes">
+                            <span class="small text-muted me-1 align-self-center">Size:</span>
+                            @foreach (var size in shoe.AvailableSizes)
+                            {
+                                <span class="size-pill">@size</span>
+                            }
+                        </div>
+
+                        <div class="shoe-card-footer pt-2">
+                            <button class="btn btn-dark w-100 rounded-pill py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
+                                    onclick="alert('Đã thêm @shoe.Name vào giỏ hàng!')">
+                                <i class="bi bi-cart-plus"></i>
+                                <span>Thêm vào giỏ</span>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+<!-- Features Highlights -->
+<section class="container mb-5 py-4 bg-white rounded-4 border">
+    <div class="row g-4 text-center">
+        <div class="col-md-3 col-6">
+            <i class="bi bi-shield-check fs-1 text-accent mb-2 d-block"></i>
+            <h6 class="fw-bold mb-1">100% Chính Hãng</h6>
+            <p class="text-muted small mb-0">Cam kết đền gấp 10 lần nếu phát hiện hàng giả</p>
+        </div>
+        <div class="col-md-3 col-6">
+            <i class="bi bi-truck fs-1 text-accent mb-2 d-block"></i>
+            <h6 class="fw-bold mb-1">Giao Hàng Siêu Tốc</h6>
+            <p class="text-muted small mb-0">Nhận hàng trong 2-4 giờ tại nội thành</p>
+        </div>
+        <div class="col-md-3 col-6">
+            <i class="bi bi-arrow-repeat fs-1 text-accent mb-2 d-block"></i>
+            <h6 class="fw-bold mb-1">Đổi Trả 30 Ngày</h6>
+            <p class="text-muted small mb-0">Hỗ trợ đổi size miễn phí tận nhà</p>
+        </div>
+        <div class="col-md-3 col-6">
+            <i class="bi bi-headset fs-1 text-accent mb-2 d-block"></i>
+            <h6 class="fw-bold mb-1">Hỗ Trợ 24/7</h6>
+            <p class="text-muted small mb-0">Đội ngũ chuyên viên tư vấn giày tận tình</p>
+        </div>
+    </div>
+</section>

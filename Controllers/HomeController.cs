@@ -6,9 +6,33 @@ namespace QuanLyBanGiay.Controllers;
 
 public class HomeController : Controller
 {
-    public IActionResult Index()
+    private readonly ILogger<HomeController> _logger;
+
+    public HomeController(ILogger<HomeController> logger)
     {
-        return View();
+        _logger = logger;
+    }
+
+    public IActionResult Index(string? brand, string? search)
+    {
+        var shoes = ShoeDataService.GetAll();
+
+        if (!string.IsNullOrWhiteSpace(brand) && !brand.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            shoes = shoes.Where(s => s.Brand.Equals(brand, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var keyword = search.Trim().ToLower();
+            shoes = shoes.Where(s => s.Name.ToLower().Contains(keyword) || 
+                                     s.Brand.ToLower().Contains(keyword) || 
+                                     s.Category.ToLower().Contains(keyword)).ToList();
+        }
+
+        ViewBag.CurrentBrand = brand ?? "All";
+        ViewBag.SearchQuery = search ?? "";
+        return View(shoes);
     }
 
     public IActionResult Privacy()
