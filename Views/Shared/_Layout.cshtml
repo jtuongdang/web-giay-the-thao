@@ -59,7 +59,7 @@
                         <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-light rounded-pill position-relative px-3 py-2 cart-btn">
                             <i class="bi bi-bag-fill fs-6"></i>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-accent">
-                                @(QuanLyBanGiay.Models.CartService.GetTotalCount(Context.Request.Cookies["sneakerzone_cart"]))
+                                <span id="cartCountBadge">@(QuanLyBanGiay.Models.CartService.GetTotalCount(Context.Request.Cookies["sneakerzone_cart"]))</span>
                                 <span class="visually-hidden">sản phẩm trong giỏ</span>
                             </span>
                         </a>

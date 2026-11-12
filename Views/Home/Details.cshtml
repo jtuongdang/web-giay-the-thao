@@ -70,7 +70,8 @@
                     }
                 </div>
 
-                <form method="post" asp-controller="Cart" asp-action="AddToCart">
+                <form id="addToCartForm" method="post" asp-controller="Cart" asp-action="AddToCart"
+                      data-ajax-url="@Url.Action("AddAjax", "Cart")">
                     <input type="hidden" name="shoeId" value="@Model.Id" />
 
                     <!-- Size Picker -->
@@ -103,7 +104,7 @@
 
                     <!-- Action Buttons -->
                     <div class="d-grid gap-3 mb-4">
-                        <button type="submit" class="btn btn-accent btn-lg rounded-pill fw-bold py-3 d-flex align-items-center justify-content-center gap-2">
+                        <button id="ajaxAddToCartButton" type="submit" class="btn btn-accent btn-lg rounded-pill fw-bold py-3 d-flex align-items-center justify-content-center gap-2">
                             <i class="bi bi-bag-plus-fill fs-5"></i>
                             <span>THÊM VÀO GIỎ HÀNG</span>
                         </button>
@@ -112,6 +113,7 @@
                         </button>
                     </div>
                 </form>
+                <p id="cartAddMessage" class="small mt-2 mb-0" role="status" aria-live="polite"></p>
 
                 <!-- Value Props Highlights -->
                 <div class="p-3 bg-light rounded-3 border small">

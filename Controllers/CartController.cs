@@ -41,6 +41,40 @@ public class CartController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public IActionResult AddAjax(int shoeId, int size, int quantity = 1)
+    {
+        var shoe = ShoeDataService.GetById(shoeId);
+        if (shoe is null || !shoe.AvailableSizes.Contains(size) || quantity is < 1 or > 99)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Sản phẩm, kích cỡ hoặc số lượng không hợp lệ."
+            });
+        }
+
+        var cartId = GetCartId();
+        CartService.Add(cartId, new CartItem
+        {
+            ShoeId = shoe.Id,
+            ShoeName = shoe.Name,
+            Brand = shoe.Brand,
+            ImageUrl = shoe.ImageUrl,
+            Price = shoe.Price,
+            Size = size,
+            Quantity = quantity
+        });
+
+        return Json(new
+        {
+            success = true,
+            count = CartService.GetTotalCount(cartId),
+            message = "Đã thêm vào giỏ hàng!"
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult Remove(int shoeId, int size)
     {
         CartService.Remove(GetCartId(), shoeId, size);
