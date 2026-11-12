@@ -56,10 +56,10 @@
                                 <i class="bi bi-search"></i>
                             </button>
                         </form>
-                        <a href="#cart" class="btn btn-outline-light rounded-pill position-relative px-3 py-2 cart-btn">
+                        <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-light rounded-pill position-relative px-3 py-2 cart-btn">
                             <i class="bi bi-bag-fill fs-6"></i>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-accent">
-                                2
+                                @(QuanLyBanGiay.Models.CartService.GetCart().Sum(x => x.Quantity))
                                 <span class="visually-hidden">sản phẩm trong giỏ</span>
                             </span>
                         </a>

@@ -76,12 +76,16 @@
                             <span class="shoe-badge bg-danger text-white">GIẢM GIÁ</span>
                         }
 
-                        <img src="@shoe.ImageUrl" alt="@shoe.Name" class="shoe-card-img" loading="lazy" />
+                        <a asp-action="Details" asp-route-id="@shoe.Id">
+                            <img src="@shoe.ImageUrl" alt="@shoe.Name" class="shoe-card-img" loading="lazy" />
+                        </a>
                     </div>
 
                     <div class="shoe-card-body">
                         <span class="shoe-brand-tag">@shoe.Brand &bull; @shoe.Category</span>
-                        <h3 class="shoe-title">@shoe.Name</h3>
+                        <h3 class="shoe-title">
+                            <a asp-action="Details" asp-route-id="@shoe.Id" class="text-decoration-none text-dark">@shoe.Name</a>
+                        </h3>
 
                         <div class="d-flex align-items-center gap-1 text-warning small mb-2">
                             @for (int i = 0; i < (int)Math.Floor(shoe.Rating); i++)

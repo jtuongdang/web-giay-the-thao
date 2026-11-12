@@ -35,6 +35,23 @@ public class HomeController : Controller
         return View(shoes);
     }
 
+    public IActionResult Details(int id)
+    {
+        var shoe = ShoeDataService.GetById(id);
+        if (shoe == null)
+        {
+            return NotFound();
+        }
+
+        var relatedShoes = ShoeDataService.GetByBrand(shoe.Brand)
+            .Where(s => s.Id != id)
+            .Take(4)
+            .ToList();
+
+        ViewBag.RelatedShoes = relatedShoes;
+        return View(shoe);
+    }
+
     public IActionResult Privacy()
     {
         return View();
