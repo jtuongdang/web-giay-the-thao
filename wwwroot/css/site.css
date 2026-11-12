@@ -1,31 +1,326 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+:root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --color-bg: #f8f9fa;
+    --color-surface: #ffffff;
+    --color-dark: #121212;
+    --color-accent: #ff4d00;
+    --color-accent-hover: #e04400;
+    --color-text-main: #1a1a1a;
+    --color-text-muted: #6c757d;
+    --color-border: #e9ecef;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 16px 36px rgba(0,0,0,0.12);
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --transition-base: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
-  margin-bottom: 60px;
+    font-family: var(--font-sans);
+    background-color: var(--color-bg);
+    color: var(--color-text-main);
+    letter-spacing: -0.01em;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+/* Announcement Top Bar */
+.top-bar {
+    background: linear-gradient(90deg, #121212 0%, #282828 100%);
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+/* Main Header */
+.main-header {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    z-index: 1030;
+}
+
+.brand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--color-accent);
+    color: white;
+    border-radius: 10px;
+    font-size: 1.25rem;
+}
+
+.brand-text {
+    letter-spacing: -0.03em;
+    color: #ffffff;
+}
+
+.text-accent {
+    color: var(--color-accent) !important;
+}
+
+.bg-accent {
+    background-color: var(--color-accent) !important;
+}
+
+.btn-accent {
+    background-color: var(--color-accent);
+    color: #ffffff;
+    border: none;
+    transition: var(--transition-base);
+}
+
+.btn-accent:hover {
+    background-color: var(--color-accent-hover);
+    color: #ffffff;
+}
+
+/* Nav links */
+.navbar-nav .nav-link {
+    color: #d1d5db !important;
+    font-weight: 600;
+    transition: var(--transition-base);
+    position: relative;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    color: #ffffff !important;
+}
+
+.navbar-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0%;
+    height: 2px;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--color-accent);
+    transition: var(--transition-base);
+}
+
+.navbar-nav .nav-link:hover::after,
+.navbar-nav .nav-link.active::after {
+    width: 60%;
+}
+
+/* Search bar */
+.header-search {
+    width: 200px;
+    transition: var(--transition-base);
+}
+
+.header-search:focus-within {
+    width: 260px;
+}
+
+.search-input {
+    background-color: #242526;
+    border: 1px solid #3a3b3c;
+    color: #ffffff;
+    font-size: 0.875rem;
+}
+
+.search-input:focus {
+    background-color: #2e3032;
+    border-color: var(--color-accent);
+    color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(255, 77, 0, 0.2);
+}
+
+/* Hero Section */
+.hero-banner {
+    background: radial-gradient(circle at 80% 20%, #2a2a2a 0%, #111111 100%);
+    color: white;
+    padding: 4rem 0;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    margin-bottom: 2.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-banner::after {
+    content: 'AIR';
+    position: absolute;
+    right: -2rem;
+    bottom: -3rem;
+    font-size: 15vw;
+    font-weight: 900;
+    color: rgba(255,255,255,0.03);
+    pointer-events: none;
+    line-height: 1;
+}
+
+/* Modern Shoe Card (Article) */
+.shoe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 1.75rem;
+}
+
+.shoe-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    transition: var(--transition-base);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+}
+
+.shoe-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(255, 77, 0, 0.3);
+}
+
+.shoe-card-media {
+    position: relative;
+    background-color: #f3f4f6;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+}
+
+.shoe-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shoe-card:hover .shoe-card-img {
+    transform: scale(1.08);
+}
+
+.shoe-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: var(--radius-sm);
+}
+
+.shoe-card-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.shoe-brand-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.shoe-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin-bottom: 0.5rem;
+    color: var(--color-dark);
+}
+
+.shoe-price-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.shoe-price {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--color-dark);
+}
+
+.shoe-original-price {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    text-decoration: line-through;
+}
+
+.shoe-sizes {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.size-pill {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-text-muted);
+    background: #fafafa;
+}
+
+.shoe-card-footer {
+    margin-top: auto;
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Brand Filter Pills */
+.filter-pill {
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid var(--color-border);
+    color: var(--color-dark);
+    background: white;
+    text-decoration: none;
+    transition: var(--transition-base);
+}
+
+.filter-pill:hover,
+.filter-pill.active {
+    background: var(--color-dark);
+    color: white;
+    border-color: var(--color-dark);
+}
+
+/* Footer */
+.social-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #222;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: var(--transition-base);
+    text-decoration: none;
+}
+
+.social-icon:hover {
+    background: var(--color-accent);
+    color: #fff;
+}
+
+.footer-links a {
+    color: #adb5bd;
+    text-decoration: none;
+    transition: var(--transition-base);
+    display: inline-block;
+    padding: 0.25rem 0;
+}
+
+.footer-links a:hover {
+    color: #ffffff;
+    transform: translateX(4px);
 }
