@@ -1,0 +1,166 @@
+@model QuanLyBanGiay.Models.ShoeItem
+@{
+    ViewData["Title"] = Model.Name + " - Chi tiết sản phẩm";
+    var related = ViewBag.RelatedShoes as List<QuanLyBanGiay.Models.ShoeItem> ?? new List<QuanLyBanGiay.Models.ShoeItem>();
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index" asp-route-brand="@Model.Brand" class="text-decoration-none text-muted">@Model.Brand</a></li>
+            <li class="breadcrumb-item active fw-semibold text-dark" aria-current="page">@Model.Name</li>
+        </ol>
+    </nav>
+
+    <!-- Product Showcase Section -->
+    <div class="row g-5 mb-5">
+        <!-- Left: Product Image Gallery -->
+        <div class="col-lg-7">
+            <div class="position-relative bg-white p-4 rounded-4 border shadow-sm text-center overflow-hidden">
+                @if (Model.IsNew)
+                {
+                    <span class="position-absolute top-0 start-0 m-4 badge bg-accent px-3 py-2 fs-7 fw-bold">MỚI RA MẮT 2026</span>
+                }
+                else if (Model.OriginalPrice.HasValue)
+                {
+                    <span class="position-absolute top-0 start-0 m-4 badge bg-danger px-3 py-2 fs-7 fw-bold">GIẢM GIÁ ĐẶC BIỆT</span>
+                }
+
+                <img id="mainShoeImage" src="@Model.ImageUrl" alt="@Model.Name" 
+                     class="img-fluid rounded-3 mb-3" 
+                     style="max-height: 480px; width: 100%; object-fit: cover; transition: transform 0.3s ease;">
+                
+                <!-- Thumbnails strip -->
+                <div class="d-flex justify-content-center gap-3 pt-2">
+                    <img src="@Model.ImageUrl" alt="Thumbnail 1" class="rounded-3 border border-2 border-dark" style="width: 75px; height: 75px; object-fit: cover; cursor: pointer;">
+                    <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&auto=format&fit=crop&q=80" alt="Thumbnail 2" class="rounded-3 border" style="width: 75px; height: 75px; object-fit: cover; cursor: pointer; opacity: 0.6;">
+                    <img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&auto=format&fit=crop&q=80" alt="Thumbnail 3" class="rounded-3 border" style="width: 75px; height: 75px; object-fit: cover; cursor: pointer; opacity: 0.6;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Product Details & Purchase Form -->
+        <div class="col-lg-5">
+            <div class="ps-lg-3">
+                <span class="badge bg-light text-dark border px-3 py-1 text-uppercase fw-bold mb-2">@Model.Brand &bull; @Model.Category</span>
+                <h1 class="fw-extrabold fs-2 text-dark mb-2">@Model.Name</h1>
+
+                <!-- Reviews rating -->
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="text-warning">
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <span class="fw-bold text-dark">@Model.Rating.ToString("0.0")</span>
+                    <span class="text-muted small">(@Model.ReviewCount đánh giá từ khách hàng)</span>
+                </div>
+
+                <!-- Price -->
+                <div class="d-flex align-items-baseline gap-3 mb-4 pb-3 border-bottom">
+                    <span class="fs-2 fw-extrabold text-accent">@string.Format("{0:N0} ₫", Model.Price)</span>
+                    @if (Model.OriginalPrice.HasValue)
+                    {
+                        <span class="fs-5 text-muted text-decoration-line-through">@string.Format("{0:N0} ₫", Model.OriginalPrice.Value)</span>
+                        <span class="badge bg-danger-subtle text-danger fw-bold">Tiết kiệm @string.Format("{0:N0} ₫", Model.OriginalPrice.Value - Model.Price)</span>
+                    }
+                </div>
+
+                <form method="post" asp-controller="Cart" asp-action="AddToCart">
+                    <input type="hidden" name="shoeId" value="@Model.Id" />
+
+                    <!-- Size Picker -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="fw-bold text-dark mb-0">Chọn Kích Cỡ (Size EU):</label>
+                            <a href="#sizeGuideModal" data-bs-toggle="modal" class="text-decoration-none small text-muted">
+                                <i class="bi bi-rulers"></i> Hướng dẫn chọn size
+                            </a>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2" id="sizeSelector">
+                            @for (int i = 0; i < Model.AvailableSizes.Count; i++)
+                            {
+                                var size = Model.AvailableSizes[i];
+                                <input type="radio" class="btn-check" name="size" id="size_@size" value="@size" @(i == 0 ? "checked" : "") required>
+                                <label class="btn btn-outline-dark px-3 py-2 fw-bold" for="size_@size">@size</label>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="mb-4">
+                        <label class="fw-bold text-dark mb-2">Số lượng:</label>
+                        <div class="input-group" style="width: 140px;">
+                            <button class="btn btn-outline-secondary" type="button" onclick="const q=document.getElementById('quantity'); if(q.value>1) q.value--;">-</button>
+                            <input type="number" id="quantity" name="quantity" class="form-control text-center fw-bold" value="1" min="1" max="10">
+                            <button class="btn btn-outline-secondary" type="button" onclick="const q=document.getElementById('quantity'); q.value++;">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-3 mb-4">
+                        <button type="submit" class="btn btn-accent btn-lg rounded-pill fw-bold py-3 d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-bag-plus-fill fs-5"></i>
+                            <span>THÊM VÀO GIỎ HÀNG</span>
+                        </button>
+                        <button type="submit" formaction="/Cart/BuyNow" class="btn btn-dark btn-lg rounded-pill fw-bold py-3">
+                            MUA NGAY - GIAO TẬN NƠI
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Value Props Highlights -->
+                <div class="p-3 bg-light rounded-3 border small">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <span>Cam kết 100% hàng chính hãng full box tem tag.</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <i class="bi bi-truck text-accent fs-5"></i>
+                        <span>Giao hàng miễn phí toàn quốc cho đơn từ 1.500.000đ.</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-arrow-repeat text-primary fs-5"></i>
+                        <span>Đổi trả và đổi size linh hoạt trong vòng 30 ngày.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    @if (related.Any())
+    {
+        <section class="mt-5 pt-4 border-top">
+            <h3 class="fw-extrabold fs-4 mb-4">SẢN PHẨM CÙNG THƯƠNG HIỆU @Model.Brand.ToUpper()</h3>
+            <div class="shoe-grid">
+                @foreach (var item in related)
+                {
+                    <article class="shoe-card">
+                        <div class="shoe-card-media">
+                            <img src="@item.ImageUrl" alt="@item.Name" class="shoe-card-img" loading="lazy" />
+                        </div>
+                        <div class="shoe-card-body">
+                            <span class="shoe-brand-tag">@item.Brand</span>
+                            <h4 class="shoe-title fs-6">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none text-dark">@item.Name</a>
+                            </h4>
+                            <div class="shoe-price-wrap">
+                                <span class="shoe-price fs-6">@string.Format("{0:N0} ₫", item.Price)</span>
+                            </div>
+                            <div class="shoe-card-footer pt-2">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark btn-sm w-100 rounded-pill fw-semibold">
+                                    Xem chi tiết
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+    }
+</div>

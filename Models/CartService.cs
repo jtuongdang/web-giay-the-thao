@@ -17,6 +17,16 @@ public static class CartService
         }
     }
 
+    public static int GetTotalCount(string? cartId)
+    {
+        if (string.IsNullOrEmpty(cartId) || !Carts.TryGetValue(cartId, out var cart))
+            return 0;
+        lock (cart)
+        {
+            return cart.Items.Sum(x => x.Quantity);
+        }
+    }
+
     public static string GetVoucherCode(string cartId)
     {
         var cart = GetCart(cartId);
