@@ -1,0 +1,154 @@
+@model QuanLyBanGiay.Models.CartViewModel
+@{
+    ViewData["Title"] = "Giỏ hàng của bạn";
+}
+
+<div class="container py-5">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <h1 class="fw-extrabold fs-2 text-dark mb-0">GIỎ HÀNG CỦA BẠN</h1>
+        <span class="badge bg-dark rounded-pill fs-6 px-3 py-2">@Model.Items.Sum(x => x.Quantity) sản phẩm</span>
+    </div>
+
+    @if (!Model.Items.Any())
+    {
+        <div class="text-center py-5 bg-white rounded-4 border shadow-sm">
+            <i class="bi bi-cart-x fs-1 text-muted mb-3 d-block"></i>
+            <h3 class="fw-bold">Giỏ hàng của bạn đang trống!</h3>
+            <p class="text-muted">Hãy khám phá bộ sưu tập giày thể thao mới nhất để chọn cho mình đôi giày ưng ý.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-accent rounded-pill px-5 py-2 fw-bold mt-2">
+                Mua Sắm Ngay
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <!-- Left: Cart Items List -->
+            <div class="col-lg-8">
+                <div class="bg-white rounded-4 border shadow-sm p-4">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="text-muted small text-uppercase">
+                                <tr>
+                                    <th style="width: 45%;">Sản phẩm</th>
+                                    <th class="text-center">Size</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-end">Thành tiền</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <img src="@item.ImageUrl" alt="@item.ShoeName" class="rounded-3 border" style="width: 80px; height: 80px; object-fit: cover;">
+                                                <div>
+                                                    <span class="badge bg-light text-muted border text-uppercase" style="font-size: 0.65rem;">@item.Brand</span>
+                                                    <h6 class="fw-bold mb-1 text-dark">@item.ShoeName</h6>
+                                                    <span class="text-accent fw-bold small">@string.Format("{0:N0} ₫", item.Price)</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-dark px-3 py-2 fs-7">@item.Size</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center justify-content-center gap-1">
+                                                <form method="post" asp-action="UpdateQuantity" class="d-inline">
+                                                    <input type="hidden" name="shoeId" value="@item.ShoeId" />
+                                                    <input type="hidden" name="size" value="@item.Size" />
+                                                    <input type="hidden" name="quantity" value="@Math.Max(1, item.Quantity - 1)" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 30px; height: 30px; padding: 0;">-</button>
+                                                </form>
+                                                <span class="fw-bold px-2">@item.Quantity</span>
+                                                <form method="post" asp-action="UpdateQuantity" class="d-inline">
+                                                    <input type="hidden" name="shoeId" value="@item.ShoeId" />
+                                                    <input type="hidden" name="size" value="@item.Size" />
+                                                    <input type="hidden" name="quantity" value="@Math.Min(99, item.Quantity + 1)" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 30px; height: 30px; padding: 0;">+</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                        <td class="text-end fw-extrabold text-dark">
+                                            @string.Format("{0:N0} ₫", item.Price * item.Quantity)
+                                        </td>
+                                        <td class="text-end">
+                                            <form method="post" asp-action="Remove" class="d-inline">
+                                                <input type="hidden" name="shoeId" value="@item.ShoeId" />
+                                                <input type="hidden" name="size" value="@item.Size" />
+                                                <button type="submit" class="btn btn-link text-danger p-0" title="Xóa">
+                                                    <i class="bi bi-trash3-fill"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-3">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark rounded-pill px-4 fw-semibold small">
+                            <i class="bi bi-arrow-left me-1"></i> Tiếp tục mua sắm
+                        </a>
+                        <span class="text-muted small">Miễn phí đổi trả 30 ngày tận nhà</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Order Summary & Voucher -->
+            <div class="col-lg-4">
+                <div class="bg-white rounded-4 border shadow-sm p-4 sticky-top" style="top: 100px;">
+                    <h5 class="fw-extrabold mb-3">TÓM TẮT ĐƠN HÀNG</h5>
+
+                    <!-- Voucher code form -->
+                    <form method="post" asp-action="ApplyVoucher" class="mb-3">
+                        <label class="small text-muted fw-semibold mb-1">Mã giảm giá (Thử: SNEAKER10):</label>
+                        <div class="input-group">
+                            <input type="text" name="voucherCode" class="form-control text-uppercase" placeholder="Nhập mã..." value="@Model.VoucherCode">
+                            <button type="submit" class="btn btn-dark fw-bold px-3">Áp Dụng</button>
+                        </div>
+                    </form>
+
+                    @if (ViewBag.CartError is string error)
+                    {
+                        <div class="alert alert-danger py-2 small mb-3">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> @error
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between mb-2 small text-muted">
+                        <span>Tạm tính:</span>
+                        <span class="fw-bold text-dark">@string.Format("{0:N0} ₫", Model.Subtotal)</span>
+                    </div>
+
+                    @if (Model.DiscountAmount > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-2 small text-success">
+                            <span>Giảm giá (Voucher @Model.VoucherCode):</span>
+                            <span class="fw-bold">-@string.Format("{0:N0} ₫", Model.DiscountAmount)</span>
+                        </div>
+                    }
+
+                    <hr class="my-3">
+
+                    <div class="d-flex justify-content-between align-items-baseline mb-4">
+                        <span class="fw-bold fs-6">Tổng thanh toán:</span>
+                        <span class="fs-3 fw-extrabold text-accent">@string.Format("{0:N0} ₫", Model.TotalAmount)</span>
+                    </div>
+
+                    <a asp-action="Checkout" class="btn btn-accent btn-lg w-100 rounded-pill fw-bold py-3 d-flex align-items-center justify-content-center gap-2">
+                        <span>TIẾN HÀNH ĐẶT HÀNG</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted"><i class="bi bi-lock-fill"></i> Thanh toán bảo mật SSL 256-bit</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

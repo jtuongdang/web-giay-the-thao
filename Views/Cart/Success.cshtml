@@ -1,0 +1,44 @@
+@model QuanLyBanGiay.Models.OrderViewModel
+@{
+    ViewData["Title"] = "Đặt hàng thành công!";
+}
+
+<div class="container py-5 text-center">
+    <div class="bg-white p-5 rounded-4 border shadow-sm mx-auto" style="max-width: 680px;">
+        <div class="mb-4">
+            <span class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-circle shadow-sm" style="width: 80px; height: 80px;">
+                <i class="bi bi-check-lg fs-1"></i>
+            </span>
+        </div>
+
+        <h2 class="fw-extrabold text-dark mb-2">ĐẶT HÀNG THÀNH CÔNG!</h2>
+        <p class="text-muted">Cảm ơn bạn đã tin tưởng mua sắm tại <strong>SNEAKERZONE</strong>.</p>
+        
+        <div class="alert alert-light border py-3 my-4 text-start">
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted small">Người nhận:</span>
+                <span class="fw-bold text-dark">@Model.CustomerName (@Model.PhoneNumber)</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted small">Địa chỉ giao hàng:</span>
+                <span class="fw-bold text-dark text-end" style="max-width: 320px;">@Model.Address</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted small">Hình thức thanh toán:</span>
+                <span class="badge bg-dark">@Model.PaymentMethod</span>
+            </div>
+            <div class="d-flex justify-content-between pt-2 border-top">
+                <span class="fw-bold">Tổng thanh toán:</span>
+                <span class="fw-extrabold fs-5 text-accent">@string.Format("{0:N0} ₫", Model.TotalAmount)</span>
+            </div>
+        </div>
+
+        <p class="small text-muted mb-4">
+            <i class="bi bi-clock-history me-1"></i> Dự kiến đơn hàng sẽ được giao đến bạn trong vòng <strong>2 - 3 ngày làm việc</strong>. Nhân viên chăm sóc khách hàng sẽ gọi điện xác nhận trước khi giao hàng.
+        </p>
+
+        <a asp-controller="Home" asp-action="Index" class="btn btn-accent btn-lg rounded-pill px-5 fw-bold">
+            Tiếp Tục Mua Sắm
+        </a>
+    </div>
+</div>
