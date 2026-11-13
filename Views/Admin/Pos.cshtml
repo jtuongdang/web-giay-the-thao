@@ -1,0 +1,711 @@
+@model List<QuanLyBanGiay.Controllers.PosProductDto>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Bán Hàng Trực Tiếp Tại Quầy (POS)";
+    var brands = ViewBag.Brands as List<string> ?? new List<string>();
+    var vouchers = ViewBag.Vouchers as List<QuanLyBanGiay.Models.Entities.Voucher> ?? new List<QuanLyBanGiay.Models.Entities.Voucher>();
+}
+
+<style>
+    .pos-container {
+        height: calc(100vh - 120px);
+        min-height: 680px;
+    }
+    .pos-products-col {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .pos-cart-col {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        border: 1px solid #e9ecef;
+    }
+    .pos-product-scroll {
+        overflow-y: auto;
+        flex: 1;
+        padding-right: 6px;
+    }
+    .pos-cart-scroll {
+        overflow-y: auto;
+        flex: 1;
+        max-height: 280px;
+    }
+    .pos-card {
+        border-radius: 12px;
+        transition: transform 0.15s, box-shadow 0.15s;
+        border: 1px solid #e9ecef;
+        background: #fff;
+    }
+    .pos-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
+    .size-btn {
+        padding: 2px 7px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 6px;
+        margin-right: 4px;
+        margin-bottom: 4px;
+        transition: all 0.12s;
+    }
+    .size-btn:hover:not(:disabled) {
+        background-color: #212529 !important;
+        color: #fff !important;
+        transform: scale(1.05);
+    }
+    .pos-item-row:hover {
+        background-color: #f8f9fa;
+    }
+    .quick-cash-btn {
+        font-size: 12px;
+        padding: 3px 8px;
+        border-radius: 6px;
+    }
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        #printArea, #printArea * {
+            visibility: visible;
+        }
+        #printArea {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 80mm;
+            padding: 10px;
+            font-size: 12px;
+        }
+    }
+</style>
+
+<div class="container-fluid px-0">
+    <div class="row g-3 pos-container">
+        <!-- CỘT TRÁI: DANH MỤC & CHỌN GIÀY (60% BĂNG THÔNG) -->
+        <div class="col-lg-7 col-xl-8 pos-products-col">
+            <!-- Thanh tìm kiếm & Lọc nhanh -->
+            <div class="card border-0 shadow-sm p-3 mb-3 bg-white rounded-3">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                            <input type="text" id="searchInput" class="form-control bg-light border-start-0" 
+                                   placeholder="Tìm giày theo Tên, SKU, Hãng... (F2)" autofocus />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex gap-1 overflow-auto py-1" style="white-space: nowrap;">
+                            <button type="button" class="btn btn-sm btn-dark brand-filter-btn active" data-brand="all">Tất cả (@Model.Count)</button>
+                            @foreach (var brand in brands)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-secondary brand-filter-btn" data-brand="@brand.ToLower()">@brand</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lưới Sản Phẩm & Biến thể Size -->
+            <div class="pos-product-scroll">
+                <div class="row g-3" id="productsGrid">
+                    @foreach (var p in Model)
+                    {
+                        var brandLower = (p.Brand ?? "").ToLower();
+                        var nameLower = (p.Name ?? "").ToLower();
+                        var skuLower = (p.Sku ?? "").ToLower();
+                        <div class="col-sm-6 col-md-4 col-xl-3 product-item" 
+                             data-brand="@brandLower" 
+                             data-search="@nameLower @skuLower @brandLower">
+                            <div class="card pos-card h-100 p-2">
+                                <div class="position-relative text-center bg-light rounded-2 p-2 mb-2" style="height: 120px;">
+                                    <img src="@(string.IsNullOrEmpty(p.ImageUrl) ? "/favicon.ico" : p.ImageUrl)" 
+                                         alt="@p.Name" class="h-100 w-auto object-fit-contain" 
+                                         onerror="this.src='/favicon.ico'" />
+                                    <span class="badge bg-dark position-absolute top-0 start-0 m-1" style="font-size: 10px;">@p.Brand</span>
+                                </div>
+                                <div class="px-1">
+                                    <div class="text-muted small mb-1" style="font-size: 11px;">#@p.Sku</div>
+                                    <div class="fw-bold text-dark text-truncate mb-1" title="@p.Name" style="font-size: 13px;">@p.Name</div>
+                                    <div class="fw-bold text-danger mb-2" style="font-size: 14px;">@p.Price.ToString("N0") đ</div>
+                                    
+                                    <!-- Danh sách Size tồn kho -->
+                                    <div class="small fw-semibold text-muted mb-1" style="font-size: 11px;">Chọn Size cho khách:</div>
+                                    <div class="d-flex flex-wrap">
+                                        @if (p.Variants != null && p.Variants.Any())
+                                        {
+                                            @foreach (var v in p.Variants)
+                                            {
+                                                var avail = v.AvailableStock;
+                                                var disabled = avail <= 0;
+                                                <button type="button" 
+                                                        class="btn @(disabled ? "btn-light text-muted border" : "btn-outline-dark") size-btn"
+                                                        @(disabled ? "disabled" : "")
+                                                        onclick="addToCart(@p.Id, '@(p.Name?.Replace("'", "\\'") ?? "")', @v.Id, @v.Size, '@(v.Color ?? "")', @v.Price, @avail, '@(p.ImageUrl ?? "")')"
+                                                        title="Size @v.Size | Màu: @v.Color | Còn lại: @avail đôi">
+                                                    @v.Size
+                                                    @if (!disabled)
+                                                    {
+                                                        <span class="badge bg-success-subtle text-success p-0" style="font-size: 9px;">(@avail)</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-danger" style="font-size: 9px;">(Hết)</span>
+                                                    }
+                                                </button>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small" style="font-size: 11px;">Chưa có size</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- CỘT PHẢI: HÓA ĐƠN & THANH TOÁN QUẦY (40% BĂNG THÔNG) -->
+        <div class="col-lg-5 col-xl-4 pos-cart-col p-3">
+            <!-- Header Hóa đơn -->
+            <div class="d-flex justify-content-between align-items-center pb-2 border-bottom mb-2">
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-receipt me-1 text-primary"></i> Đơn Hàng Tại Quầy</h5>
+                    <small class="text-muted" id="currentTimeText">Bàn thu ngân #01</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearCart()" title="Xóa toàn bộ đơn">
+                    <i class="bi bi-trash"></i> Xóa đơn
+                </button>
+            </div>
+
+            <!-- Thông tin khách hàng nhanh -->
+            <div class="row g-2 mb-2">
+                <div class="col-7">
+                    <input type="text" id="custNameInput" class="form-control form-control-sm" value="Khách lẻ tại quầy" placeholder="Tên khách hàng" />
+                </div>
+                <div class="col-5">
+                    <input type="tel" id="custPhoneInput" class="form-control form-control-sm" placeholder="Số điện thoại" />
+                </div>
+            </div>
+
+            <!-- Bảng danh sách sản phẩm trong giỏ -->
+            <div class="pos-cart-scroll mb-2 border rounded-2 p-1 bg-light">
+                <table class="table table-sm table-borderless align-middle mb-0" style="font-size: 12px;">
+                    <thead class="text-muted border-bottom" style="font-size: 11px;">
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th class="text-center" style="width: 80px;">SL</th>
+                            <th class="text-end" style="width: 80px;">Thành tiền</th>
+                            <th style="width: 25px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartTableBody">
+                        <tr id="emptyCartRow">
+                            <td colspan="4" class="text-center py-4 text-muted">
+                                <i class="bi bi-cart3 fs-2 d-block mb-1 text-secondary"></i>
+                                Chưa có sản phẩm nào. Chọn size giày ở cột trái để thêm vào đơn.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Voucher & Tạm tính -->
+            <div class="border-top pt-2">
+                <div class="input-group input-group-sm mb-2">
+                    <select id="voucherSelect" class="form-select form-select-sm" onchange="applySelectedVoucher()">
+                        <option value="">-- Chọn Voucher Giảm Giá --</option>
+                        @foreach (var v in vouchers)
+                        {
+                            var discText = v.DiscountType.ToUpper() == "PERCENT" ? $"{v.DiscountValue:N0}%" : $"{v.DiscountValue:N0} đ";
+                            <option value="@v.Code" data-type="@v.DiscountType" data-val="@v.DiscountValue" data-min="@v.MinOrderAmount" data-max="@(v.MaxDiscountAmount ?? 0)">
+                                Mã: @v.Code (Giảm @discText - Đơn từ @v.MinOrderAmount.ToString("N0") đ)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="d-flex justify-content-between text-muted small mb-1">
+                    <span>Tạm tính:</span>
+                    <span class="fw-semibold text-dark" id="subtotalText">0 đ</span>
+                </div>
+                <div class="d-flex justify-content-between text-muted small mb-1">
+                    <span>Giảm giá (Voucher):</span>
+                    <span class="fw-semibold text-danger" id="discountText">-0 đ</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-top border-bottom my-1">
+                    <span class="fw-bold text-dark fs-6">TỔNG THANH TOÁN:</span>
+                    <span class="fw-bold text-danger fs-5" id="totalAmountText">0 đ</span>
+                </div>
+
+                <!-- Phương thức thanh toán -->
+                <div class="my-2">
+                    <label class="form-label small fw-bold text-muted mb-1">Hình thức thanh toán:</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="paymentMethodRadio" id="payCash" value="Tiền mặt" checked onchange="onPaymentMethodChange()">
+                        <label class="btn btn-outline-dark btn-sm py-2" for="payCash"><i class="bi bi-cash me-1"></i> Tiền mặt</label>
+
+                        <input type="radio" class="btn-check" name="paymentMethodRadio" id="payQr" value="Chuyển khoản QR" onchange="onPaymentMethodChange()">
+                        <label class="btn btn-outline-dark btn-sm py-2" for="payQr"><i class="bi bi-qr-code me-1"></i> VietQR</label>
+
+                        <input type="radio" class="btn-check" name="paymentMethodRadio" id="payCard" value="Thẻ POS" onchange="onPaymentMethodChange()">
+                        <label class="btn btn-outline-dark btn-sm py-2" for="payCard"><i class="bi bi-credit-card me-1"></i> Quẹt thẻ</label>
+                    </div>
+                </div>
+
+                <!-- Tính tiền thừa (Cho tiền mặt) -->
+                <div id="cashCalculationBox" class="bg-light p-2 rounded-2 mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="small text-muted mb-0">Tiền khách đưa:</label>
+                        <input type="number" id="cashGivenInput" class="form-control form-control-sm text-end fw-bold" 
+                               style="width: 140px;" placeholder="0" oninput="calculateChange()" />
+                    </div>
+                    <!-- Quick cash buttons -->
+                    <div class="d-flex gap-1 justify-content-end mb-1">
+                        <button type="button" class="btn btn-outline-secondary quick-cash-btn" onclick="setCashExact()">Đủ tiền</button>
+                        <button type="button" class="btn btn-outline-secondary quick-cash-btn" onclick="addCash(200000)">200k</button>
+                        <button type="button" class="btn btn-outline-secondary quick-cash-btn" onclick="addCash(500000)">500k</button>
+                        <button type="button" class="btn btn-outline-secondary quick-cash-btn" onclick="addCash(1000000)">1 Triệu</button>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                        <span class="small fw-bold text-dark">Tiền thối lại khách:</span>
+                        <span class="fw-bold text-success fs-6" id="changeAmountText">0 đ</span>
+                    </div>
+                </div>
+
+                <!-- Nút Thanh toán F9 -->
+                <button type="button" id="checkoutBtn" class="btn btn-success w-100 py-3 fw-bold fs-6 shadow" onclick="submitPosOrder()">
+                    <i class="bi bi-check2-circle me-1"></i> HOÀN TẤT THANH TOÁN (F9)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL HÓA ĐƠN BÁN LẺ (RECEIPT MODAL SẴN SÀNG IN) -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+        <div class="modal-content">
+            <div class="modal-header py-2 bg-dark text-white">
+                <h6 class="modal-title fw-bold"><i class="bi bi-printer me-1"></i> Hóa Đơn Bán Lẻ</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="resetPosScreen()"></button>
+            </div>
+            <div class="modal-body p-3" id="printArea">
+                <div class="text-center mb-3">
+                    <h5 class="fw-bold mb-0">⚡ SNEAKERZONE SHOP</h5>
+                    <div class="text-muted small">Cửa hàng giày thể thao chính hãng</div>
+                    <div class="text-muted small">Hotline: 0909.123.456 - CSKH: SneakerZone.vn</div>
+                    <div class="text-muted small">---------------------------------------</div>
+                    <div class="fw-bold mt-1" id="receiptOrderCode">HÓA ĐƠN: POS-20261113-001</div>
+                    <div class="text-muted small" id="receiptDate">13/11/2026 11:20:00</div>
+                </div>
+
+                <div class="small mb-2">
+                    <div><b>Khách hàng:</b> <span id="receiptCustName">Khách lẻ tại quầy</span></div>
+                    <div><b>Số ĐT:</b> <span id="receiptCustPhone">0900000000</span></div>
+                    <div><b>Hình thức:</b> <span id="receiptPaymentMethod">Tiền mặt</span></div>
+                </div>
+
+                <table class="table table-sm border-top border-bottom table-borderless small mb-2">
+                    <thead>
+                        <tr class="border-bottom">
+                            <th>Sản phẩm</th>
+                            <th class="text-center">SL</th>
+                            <th class="text-end">Đ.Giá</th>
+                            <th class="text-end">T.Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody id="receiptItemsBody">
+                        <!-- Items rendered dynamically -->
+                    </tbody>
+                </table>
+
+                <div class="small">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Tạm tính:</span>
+                        <span id="receiptSubtotal">0 đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1 text-danger">
+                        <span>Giảm giá (Voucher):</span>
+                        <span id="receiptDiscount">-0 đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold fs-6 border-top pt-1 mb-1">
+                        <span>TỔNG CỘNG:</span>
+                        <span class="text-danger" id="receiptTotal">0 đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1" id="receiptCashGivenRow">
+                        <span>Tiền khách đưa:</span>
+                        <span id="receiptCashGiven">0 đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold text-success" id="receiptChangeRow">
+                        <span>Tiền thối lại:</span>
+                        <span id="receiptChange">0 đ</span>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3 pt-2 border-top small text-muted">
+                    <p class="mb-0 fw-semibold">Cảm ơn quý khách & Hẹn gặp lại!</p>
+                    <p class="mb-0" style="font-size: 10px;">(Hỗ trợ đổi size trong vòng 7 ngày kèm hóa đơn)</p>
+                </div>
+            </div>
+            <div class="modal-footer py-2 bg-light d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" onclick="resetPosScreen()">
+                    <i class="bi bi-plus-circle me-1"></i> Tạo Đơn Mới (Esc)
+                </button>
+                <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="window.print()">
+                    <i class="bi bi-printer-fill me-1"></i> In Hóa Đơn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // State của giỏ hàng POS
+    let cart = [];
+    let currentSubtotal = 0;
+    let currentDiscount = 0;
+    let currentTotal = 0;
+    let selectedVoucher = null;
+
+    // Format tiền tệ VNĐ
+    function formatVnd(num) {
+        return new Intl.NumberFormat('vi-VN').format(Math.round(num)) + ' đ';
+    }
+
+    // Thêm sản phẩm vào giỏ
+    function addToCart(productId, productName, variantId, size, color, price, maxStock, imageUrl) {
+        const existing = cart.find(x => x.variantId === variantId);
+        if (existing) {
+            if (existing.quantity >= maxStock) {
+                alert(`Size ${size} của mẫu ${productName} chỉ còn ${maxStock} đôi trong kho.`);
+                return;
+            }
+            existing.quantity++;
+        } else {
+            cart.push({
+                productId,
+                productName,
+                variantId,
+                size,
+                color,
+                price,
+                maxStock,
+                imageUrl,
+                quantity: 1
+            });
+        }
+        renderCart();
+    }
+
+    // Thay đổi số lượng
+    function changeQty(variantId, delta) {
+        const item = cart.find(x => x.variantId === variantId);
+        if (!item) return;
+        const newQty = item.quantity + delta;
+        if (newQty <= 0) {
+            cart = cart.filter(x => x.variantId !== variantId);
+        } else {
+            if (newQty > item.maxStock) {
+                alert(`Kho chỉ còn tối đa ${item.maxStock} đôi size ${item.size}.`);
+                return;
+            }
+            item.quantity = newQty;
+        }
+        renderCart();
+    }
+
+    // Xóa một món
+    function removeItem(variantId) {
+        cart = cart.filter(x => x.variantId !== variantId);
+        renderCart();
+    }
+
+    // Xóa sạch giỏ
+    function clearCart() {
+        if (cart.length > 0 && confirm('Bạn có chắc muốn xóa sạch đơn hàng này?')) {
+            cart = [];
+            renderCart();
+        }
+    }
+
+    // Render bảng giỏ hàng
+    function renderCart() {
+        const tbody = document.getElementById('cartTableBody');
+        if (cart.length === 0) {
+            tbody.innerHTML = `
+                <tr id="emptyCartRow">
+                    <td colspan="4" class="text-center py-4 text-muted">
+                        <i class="bi bi-cart3 fs-2 d-block mb-1 text-secondary"></i>
+                        Chưa có sản phẩm nào. Chọn size giày ở cột trái để thêm vào đơn.
+                    </td>
+                </tr>`;
+            currentSubtotal = 0;
+            currentDiscount = 0;
+            currentTotal = 0;
+            updateTotals();
+            return;
+        }
+
+        currentSubtotal = 0;
+        let html = '';
+        cart.forEach(item => {
+            const lineTotal = item.price * item.quantity;
+            currentSubtotal += lineTotal;
+            html += `
+                <tr class="pos-item-row border-bottom">
+                    <td>
+                        <div class="fw-semibold text-dark text-truncate" style="max-width: 140px;">${item.productName}</div>
+                        <div class="text-muted" style="font-size: 11px;">Size: <span class="badge bg-dark">${item.size}</span> | Màu: ${item.color}</div>
+                        <div class="text-danger" style="font-size: 11px;">${formatVnd(item.price)}</div>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-center gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary p-0" style="width: 20px; height: 20px;" onclick="changeQty(${item.variantId}, -1)">-</button>
+                            <span class="fw-bold px-1">${item.quantity}</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary p-0" style="width: 20px; height: 20px;" onclick="changeQty(${item.variantId}, 1)">+</button>
+                        </div>
+                    </td>
+                    <td class="text-end fw-bold text-dark">${formatVnd(lineTotal)}</td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm text-danger p-0" onclick="removeItem(${item.variantId})"><i class="bi bi-x-circle"></i></button>
+                    </td>
+                </tr>`;
+        });
+        tbody.innerHTML = html;
+        recalculateDiscount();
+        updateTotals();
+    }
+
+    // Áp dụng voucher
+    function applySelectedVoucher() {
+        const select = document.getElementById('voucherSelect');
+        const opt = select.options[select.selectedIndex];
+        if (!opt || !opt.value) {
+            selectedVoucher = null;
+        } else {
+            selectedVoucher = {
+                code: opt.value,
+                type: opt.getAttribute('data-type'),
+                val: parseFloat(opt.getAttribute('data-val')),
+                min: parseFloat(opt.getAttribute('data-min')),
+                max: parseFloat(opt.getAttribute('data-max'))
+            };
+        }
+        recalculateDiscount();
+        updateTotals();
+    }
+
+    function recalculateDiscount() {
+        if (!selectedVoucher || currentSubtotal < selectedVoucher.min) {
+            currentDiscount = 0;
+            return;
+        }
+        if (selectedVoucher.type.toUpperCase() === 'PERCENT') {
+            let disc = currentSubtotal * (selectedVoucher.val / 100);
+            if (selectedVoucher.max > 0 && disc > selectedVoucher.max) {
+                disc = selectedVoucher.max;
+            }
+            currentDiscount = disc;
+        } else {
+            currentDiscount = selectedVoucher.val;
+        }
+        currentDiscount = Math.min(currentDiscount, currentSubtotal);
+    }
+
+    function updateTotals() {
+        currentTotal = Math.max(0, currentSubtotal - currentDiscount);
+        document.getElementById('subtotalText').innerText = formatVnd(currentSubtotal);
+        document.getElementById('discountText').innerText = currentDiscount > 0 ? `-${formatVnd(currentDiscount)}` : '0 đ';
+        document.getElementById('totalAmountText').innerText = formatVnd(currentTotal);
+        calculateChange();
+    }
+
+    // Đổi hình thức thanh toán
+    function onPaymentMethodChange() {
+        const isCash = document.getElementById('payCash').checked;
+        const box = document.getElementById('cashCalculationBox');
+        box.style.display = isCash ? 'block' : 'none';
+        calculateChange();
+    }
+
+    // Tính tiền thối
+    function calculateChange() {
+        const isCash = document.getElementById('payCash').checked;
+        if (!isCash) {
+            document.getElementById('changeAmountText').innerText = '0 đ';
+            return;
+        }
+        const given = parseFloat(document.getElementById('cashGivenInput').value) || 0;
+        const change = Math.max(0, given - currentTotal);
+        document.getElementById('changeAmountText').innerText = formatVnd(change);
+    }
+
+    function setCashExact() {
+        document.getElementById('cashGivenInput').value = currentTotal;
+        calculateChange();
+    }
+
+    function addCash(amount) {
+        const cur = parseFloat(document.getElementById('cashGivenInput').value) || 0;
+        document.getElementById('cashGivenInput').value = cur + amount;
+        calculateChange();
+    }
+
+    // Gửi thanh toán POS
+    async function submitPosOrder() {
+        if (cart.length === 0) {
+            alert('Vui lòng chọn ít nhất 1 sản phẩm vào đơn hàng.');
+            return;
+        }
+
+        const btn = document.getElementById('checkoutBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...';
+
+        const paymentMethod = document.querySelector('input[name="paymentMethodRadio"]:checked')?.value || 'Tiền mặt';
+        const givenAmount = paymentMethod === 'Tiền mặt' ? (parseFloat(document.getElementById('cashGivenInput').value) || currentTotal) : currentTotal;
+
+        if (paymentMethod === 'Tiền mặt' && givenAmount < currentTotal) {
+            if (!confirm(`Khách đưa ${formatVnd(givenAmount)} chưa đủ tổng tiền ${formatVnd(currentTotal)}. Bạn vẫn muốn tiếp tục?`)) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> HOÀN TẤT THANH TOÁN (F9)';
+                return;
+            }
+        }
+
+        const payload = {
+            customerName: document.getElementById('custNameInput').value.trim() || 'Khách lẻ tại quầy',
+            customerPhone: document.getElementById('custPhoneInput').value.trim() || '0900000000',
+            voucherCode: selectedVoucher ? selectedVoucher.code : '',
+            paymentMethod: paymentMethod,
+            customerGivenAmount: givenAmount,
+            items: cart.map(i => ({ variantId: i.variantId, quantity: i.quantity }))
+        };
+
+        try {
+            const resp = await fetch('/Admin/PosCheckout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const res = await resp.json();
+
+            if (res.success) {
+                showReceiptModal(res.data);
+            } else {
+                alert('Thanh toán thất bại: ' + res.message);
+            }
+        } catch (e) {
+            alert('Lỗi kết nối máy chủ: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> HOÀN TẤT THANH TOÁN (F9)';
+        }
+    }
+
+    // Hiển thị modal hóa đơn
+    function showReceiptModal(data) {
+        document.getElementById('receiptOrderCode').innerText = `HÓA ĐƠN: #${data.orderCode}`;
+        document.getElementById('receiptDate').innerText = data.createdAt;
+        document.getElementById('receiptCustName').innerText = data.customerName;
+        document.getElementById('receiptCustPhone').innerText = data.customerPhone;
+        document.getElementById('receiptPaymentMethod').innerText = data.paymentMethod;
+
+        let itemsHtml = '';
+        data.items.forEach(i => {
+            itemsHtml += `
+                <tr>
+                    <td>
+                        <div>${i.productName}</div>
+                        <small class="text-muted">Size ${i.size} - ${i.color}</small>
+                    </td>
+                    <td class="text-center">${i.quantity}</td>
+                    <td class="text-end">${formatVnd(i.unitPrice)}</td>
+                    <td class="text-end fw-bold">${formatVnd(i.totalPrice)}</td>
+                </tr>`;
+        });
+        document.getElementById('receiptItemsBody').innerHTML = itemsHtml;
+
+        document.getElementById('receiptSubtotal').innerText = formatVnd(data.subtotal);
+        document.getElementById('receiptDiscount').innerText = data.discount > 0 ? `-${formatVnd(data.discount)}` : '0 đ';
+        document.getElementById('receiptTotal').innerText = formatVnd(data.totalAmount);
+
+        if (data.paymentMethod === 'Tiền mặt') {
+            document.getElementById('receiptCashGivenRow').style.display = 'flex';
+            document.getElementById('receiptChangeRow').style.display = 'flex';
+            document.getElementById('receiptCashGiven').innerText = formatVnd(data.customerGiven);
+            document.getElementById('receiptChange').innerText = formatVnd(data.changeAmount);
+        } else {
+            document.getElementById('receiptCashGivenRow').style.display = 'none';
+            document.getElementById('receiptChangeRow').style.display = 'none';
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+        modal.show();
+    }
+
+    // Reset lại màn hình sau khi in
+    function resetPosScreen() {
+        cart = [];
+        document.getElementById('voucherSelect').value = '';
+        selectedVoucher = null;
+        document.getElementById('cashGivenInput').value = '';
+        document.getElementById('custNameInput').value = 'Khách lẻ tại quầy';
+        document.getElementById('custPhoneInput').value = '';
+        renderCart();
+    }
+
+    // Lọc tìm kiếm & Hãng ở cột trái
+    document.getElementById('searchInput').addEventListener('input', function() {
+        filterProducts();
+    });
+
+    document.querySelectorAll('.brand-filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.brand-filter-btn').forEach(b => b.classList.remove('active', 'btn-dark'));
+            document.querySelectorAll('.brand-filter-btn').forEach(b => b.classList.add('btn-outline-secondary'));
+            this.classList.add('active', 'btn-dark');
+            this.classList.remove('btn-outline-secondary');
+            filterProducts();
+        });
+    });
+
+    function filterProducts() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        const activeBrand = document.querySelector('.brand-filter-btn.active')?.getAttribute('data-brand') || 'all';
+
+        document.querySelectorAll('.product-item').forEach(el => {
+            const searchData = el.getAttribute('data-search') || '';
+            const brand = el.getAttribute('data-brand') || '';
+
+            const matchQuery = !query || searchData.includes(query);
+            const matchBrand = activeBrand === 'all' || brand === activeBrand;
+
+            if (matchQuery && matchBrand) {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+    }
+
+    // Phím tắt bàn phím tiện lợi cho thu ngân
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F9') {
+            e.preventDefault();
+            submitPosOrder();
+        } else if (e.key === 'F2') {
+            e.preventDefault();
+            document.getElementById('searchInput').focus();
+        }
+    });
+</script>

@@ -50,6 +50,15 @@
 
                 <li class="sidebar-heading">Bán hàng & Đổi trả</li>
                 <li>
+                    <a asp-controller="Admin" asp-action="Pos" class="sidebar-link @(ViewData["ActiveMenu"] as string == "Pos" ? "active" : "")" style="background: rgba(255, 193, 7, 0.1); border-left: 3px solid #ffc107;">
+                        <span class="link-content">
+                            <i class="bi bi-calculator-fill text-warning"></i>
+                            <span class="fw-bold text-warning">Bán hàng tại quầy (POS)</span>
+                        </span>
+                        <span class="badge bg-warning text-dark ms-auto" style="font-size: 10px;">QUẦY</span>
+                    </a>
+                </li>
+                <li>
                     <a asp-controller="Admin" asp-action="Orders" class="sidebar-link @(ViewData["ActiveMenu"] as string == "Orders" ? "active" : "")">
                         <span class="link-content">
                             <i class="bi bi-bag-check-fill"></i>
@@ -115,6 +124,10 @@
                 </div>
 
                 <div class="topbar-right">
+                    <a asp-controller="Admin" asp-action="Pos" class="btn btn-warning btn-sm fw-bold shadow-sm">
+                        <i class="bi bi-calculator-fill me-1"></i> Bán hàng tại quầy (POS)
+                    </a>
+
                     <span class="badge bg-light text-dark border px-3 py-2 fw-semibold">
                         <i class="bi bi-shield-lock-fill text-success me-1"></i> Quyền: Admin / Quản trị viên
                     </span>

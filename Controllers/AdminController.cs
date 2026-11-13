@@ -1342,6 +1342,252 @@ public class AdminController(AppDbContext db, ILogger<AdminController> logger) :
         return RedirectToAction(nameof(CashFlow));
     }
 
+    // ==========================================
+    // 8. BÁN HÀNG TẠI QUẦY (POINT OF SALE - POS)
+    // ==========================================
+    [HttpGet]
+    public async Task<IActionResult> Pos()
+    {
+        ViewData["ActiveMenu"] = "Pos";
+        ViewData["Title"] = "Bán Hàng Trực Tiếp Tại Quầy (POS)";
+
+        var products = await db.Products
+            .Include(p => p.Variants)
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.Brand)
+            .ThenBy(p => p.Name)
+            .Select(p => new PosProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Sku = p.Sku,
+                Brand = p.Brand,
+                ImageUrl = p.ImageUrl,
+                Price = p.RetailPrice,
+                Variants = p.Variants
+                    .OrderBy(v => v.Size)
+                    .Select(v => new PosVariantDto
+                    {
+                        Id = v.Id,
+                        Size = v.Size,
+                        Color = v.Color,
+                        Price = p.RetailPrice,
+                        CostPrice = v.CostPrice,
+                        StockQuantity = v.StockQuantity,
+                        ReservedQuantity = v.ReservedQuantity
+                    }).ToList()
+            })
+            .ToListAsync();
+
+        var brands = products.Select(p => p.Brand).Where(b => !string.IsNullOrEmpty(b)).Distinct().OrderBy(b => b).ToList();
+
+        var now = DateTime.UtcNow;
+        var activeVouchers = await db.Vouchers
+            .Where(v => v.IsActive && v.StartAt <= now && v.EndAt >= now && v.UsedCount < v.UsageLimit)
+            .ToListAsync();
+
+        ViewBag.Brands = brands;
+        ViewBag.Vouchers = activeVouchers;
+
+        return View(products);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> PosCheckout([FromBody] PosCheckoutInputModel model)
+    {
+        if (model == null || model.Items == null || model.Items.Count == 0)
+        {
+            return Json(new { success = false, message = "Đơn hàng phải có ít nhất 1 sản phẩm." });
+        }
+
+        var now = DateTime.UtcNow;
+        var requestedVariantIds = model.Items.Select(i => i.VariantId).Distinct().ToList();
+
+        await using var tx = await db.Database.BeginTransactionAsync();
+        try
+        {
+            var variants = await db.ProductVariants
+                .Include(v => v.Product)
+                .Where(v => requestedVariantIds.Contains(v.Id))
+                .ToDictionaryAsync(v => v.Id);
+
+            if (variants.Count != requestedVariantIds.Count)
+            {
+                return Json(new { success = false, message = "Một số biến thể sản phẩm không tồn tại trong hệ thống." });
+            }
+
+            // Kiểm tra tồn kho
+            foreach (var item in model.Items)
+            {
+                var variant = variants[item.VariantId];
+                if (variant.StockQuantity < item.Quantity)
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = $"Sản phẩm {variant.Product.Name} (Size {variant.Size}, Màu {variant.Color}) chỉ còn {variant.StockQuantity} đôi trong kho. Không đủ đáp ứng số lượng {item.Quantity}." 
+                    });
+                }
+            }
+
+            // Tính tạm tính và giá vốn
+            decimal subtotal = 0m;
+            decimal totalCogs = 0m;
+            var orderItems = new List<OrderItem>();
+
+            foreach (var item in model.Items)
+            {
+                var variant = variants[item.VariantId];
+                var unitPrice = variant.Product.RetailPrice;
+                var lineTotal = unitPrice * item.Quantity;
+                subtotal += lineTotal;
+                totalCogs += variant.CostPrice * item.Quantity;
+
+                orderItems.Add(new OrderItem
+                {
+                    ProductVariantId = variant.Id,
+                    ProductName = variant.Product.Name,
+                    Size = variant.Size,
+                    Color = variant.Color,
+                    UnitPrice = unitPrice,
+                    UnitCost = variant.CostPrice,
+                    Quantity = item.Quantity,
+                    TotalPrice = lineTotal
+                });
+            }
+
+            // Kiểm tra Voucher
+            decimal discount = 0m;
+            Voucher? appliedVoucher = null;
+            if (!string.IsNullOrWhiteSpace(model.VoucherCode))
+            {
+                var codeUpper = model.VoucherCode.Trim().ToUpper();
+                appliedVoucher = await db.Vouchers.FirstOrDefaultAsync(v => 
+                    v.Code.ToUpper() == codeUpper && v.IsActive && v.StartAt <= now && v.EndAt >= now);
+
+                if (appliedVoucher != null && subtotal >= appliedVoucher.MinOrderAmount && appliedVoucher.UsedCount < appliedVoucher.UsageLimit)
+                {
+                    if (appliedVoucher.DiscountType.Equals("PERCENT", StringComparison.OrdinalIgnoreCase))
+                    {
+                        discount = subtotal * (appliedVoucher.DiscountValue / 100m);
+                        if (appliedVoucher.MaxDiscountAmount.HasValue && discount > appliedVoucher.MaxDiscountAmount.Value)
+                        {
+                            discount = appliedVoucher.MaxDiscountAmount.Value;
+                        }
+                    }
+                    else
+                    {
+                        discount = appliedVoucher.DiscountValue;
+                    }
+                    discount = Math.Min(discount, subtotal);
+                    appliedVoucher.UsedCount++;
+                }
+            }
+
+            decimal totalAmount = Math.Max(0m, subtotal - discount);
+            var orderCode = $"POS-{now:yyMMddHHmm}-{Random.Shared.Next(100, 999)}";
+
+            var order = new Order
+            {
+                OrderCode = orderCode,
+                UserId = null,
+                VoucherId = appliedVoucher?.Id,
+                VoucherCode = appliedVoucher?.Code,
+                CustomerName = string.IsNullOrWhiteSpace(model.CustomerName) ? "Khách lẻ tại quầy" : model.CustomerName.Trim(),
+                CustomerPhone = string.IsNullOrWhiteSpace(model.CustomerPhone) ? "0900000000" : model.CustomerPhone.Trim(),
+                ShippingAddress = "Bán trực tiếp tại quầy SNEAKERZONE",
+                Subtotal = subtotal,
+                DiscountAmount = discount,
+                ShippingFee = 0m,
+                TotalAmount = totalAmount,
+                PaymentMethod = string.IsNullOrWhiteSpace(model.PaymentMethod) ? "Tiền mặt" : model.PaymentMethod,
+                PaymentStatus = "Paid",
+                OrderStatus = "Completed",
+                CreatedAt = now,
+                Items = orderItems
+            };
+
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            // Trừ kho & ghi InventoryTransactions
+            foreach (var item in model.Items)
+            {
+                var variant = variants[item.VariantId];
+                var before = variant.StockQuantity;
+                variant.StockQuantity -= item.Quantity;
+
+                db.InventoryTransactions.Add(new InventoryTransaction
+                {
+                    TxCode = $"TX-POS-{now:yyyyMMddHHmmss}-{Random.Shared.Next(100, 999)}",
+                    ProductVariantId = variant.Id,
+                    TxType = "EXPORT",
+                    QuantityChange = -item.Quantity,
+                    QuantityBefore = before,
+                    QuantityAfter = variant.StockQuantity,
+                    ReferenceType = "Order",
+                    ReferenceId = order.Id,
+                    CreatedAt = now,
+                    Note = $"Bán hàng trực tiếp tại quầy theo hóa đơn #{order.OrderCode}"
+                });
+            }
+
+            // Ghi nhận phiếu thu CashFlowLedger
+            db.CashFlowLedger.Add(new CashFlowLedger
+            {
+                VoucherCode = $"PT-POS-{now:yyyyMMddHHmmss}-{Random.Shared.Next(100, 999)}",
+                VoucherType = "RECEIPT",
+                Category = "REVENUE_SALE",
+                Amount = totalAmount,
+                PaymentMethod = order.PaymentMethod,
+                ReferenceType = "Order",
+                ReferenceId = order.Id,
+                CreatedAt = now,
+                Note = $"Thu tiền bán hàng trực tiếp tại quầy hóa đơn #{order.OrderCode} ({order.CustomerName})"
+            });
+
+            await db.SaveChangesAsync();
+            await tx.CommitAsync();
+
+            var change = Math.Max(0m, model.CustomerGivenAmount - totalAmount);
+
+            return Json(new
+            {
+                success = true,
+                message = "Thanh toán thành công!",
+                data = new
+                {
+                    orderId = order.Id,
+                    orderCode = order.OrderCode,
+                    customerName = order.CustomerName,
+                    customerPhone = order.CustomerPhone,
+                    paymentMethod = order.PaymentMethod,
+                    subtotal = order.Subtotal,
+                    discount = order.DiscountAmount,
+                    voucherCode = order.VoucherCode,
+                    totalAmount = order.TotalAmount,
+                    customerGiven = model.CustomerGivenAmount,
+                    changeAmount = change,
+                    createdAt = order.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss"),
+                    items = orderItems.Select(i => new
+                    {
+                        productName = i.ProductName,
+                        size = i.Size,
+                        color = i.Color,
+                        unitPrice = i.UnitPrice,
+                        quantity = i.Quantity,
+                        totalPrice = i.TotalPrice
+                    }).ToList()
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync();
+            logger.LogError(ex, "Lỗi trong quá trình thanh toán tại quầy POS");
+            return Json(new { success = false, message = "Lỗi xử lý đơn hàng POS: " + ex.Message });
+        }
+    }
+
     // Helper redirect
     private IActionResult RedirectToLocal(string? returnUrl)
     {
@@ -1351,6 +1597,50 @@ public class AdminController(AppDbContext db, ILogger<AdminController> logger) :
         }
         return RedirectToAction(nameof(Orders));
     }
+}
+
+// ==========================================
+// POS DTOs
+// ==========================================
+
+public class PosProductDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Sku { get; set; } = string.Empty;
+    public string Brand { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
+    public decimal Price { get; set; }
+    public List<PosVariantDto> Variants { get; set; } = new();
+}
+
+public class PosVariantDto
+{
+    public int Id { get; set; }
+    public int Size { get; set; }
+    public string Color { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public decimal CostPrice { get; set; }
+    public int StockQuantity { get; set; }
+    public int ReservedQuantity { get; set; }
+    public int AvailableStock => Math.Max(0, StockQuantity - ReservedQuantity);
+}
+
+public class PosCheckoutInputModel
+{
+    public string? CustomerName { get; set; } = "Khách lẻ tại quầy";
+    public string? CustomerPhone { get; set; }
+    public string? VoucherCode { get; set; }
+    public string PaymentMethod { get; set; } = "Tiền mặt";
+    public decimal CustomerGivenAmount { get; set; }
+    public string? Note { get; set; }
+    public List<PosItemInputModel> Items { get; set; } = new();
+}
+
+public class PosItemInputModel
+{
+    public int VariantId { get; set; }
+    public int Quantity { get; set; } = 1;
 }
 
 // ==========================================
