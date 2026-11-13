@@ -67,6 +67,48 @@ window.triggerFlyToCart = function (imgElement, targetCartElement, callback) {
 
 const addToCartForm = document.getElementById("addToCartForm");
 if (addToCartForm) {
+    const variants = JSON.parse(addToCartForm.dataset.variants || "[]");
+    const colorPicker = document.getElementById("colorSelector");
+    const sizePicker = document.getElementById("sizeSelector");
+    const selectedVariantId = document.getElementById("selectedVariantId");
+    const quantityInput = document.getElementById("quantity");
+    const stockMessage = document.getElementById("stockMessage");
+
+    const refreshVariantOptions = () => {
+        const color = colorPicker?.value;
+        let selected = null;
+        sizePicker?.querySelectorAll('input[name="size"]').forEach(input => {
+            const variant = variants.find(v => v.color === color && v.size === Number(input.value));
+            const label = sizePicker.querySelector(`label[for="${input.id}"]`);
+            input.disabled = !variant || variant.availableQuantity < 1;
+            label?.classList.toggle("disabled", input.disabled);
+            label?.classList.toggle("text-muted", input.disabled);
+            const count = label?.querySelector("small");
+            if (count) count.textContent = `${variant?.availableQuantity || 0} còn`;
+            if (input.checked && !input.disabled) selected = variant;
+        });
+
+        if (!selected) {
+            const first = sizePicker?.querySelector('input[name="size"]:not(:disabled)');
+            if (first) {
+                first.checked = true;
+                selected = variants.find(v => v.color === color && v.size === Number(first.value));
+            }
+        }
+        selectedVariantId.value = selected?.id || "";
+        if (quantityInput) {
+            quantityInput.max = String(selected?.availableQuantity || 1);
+            if (+quantityInput.value > +quantityInput.max) quantityInput.value = quantityInput.max;
+        }
+        if (stockMessage) stockMessage.textContent = selected ? `Còn ${selected.availableQuantity} đôi cho màu ${selected.color}, size ${selected.size}.` : "Màu này hiện đã hết hàng.";
+        const button = document.getElementById("ajaxAddToCartButton");
+        if (button) button.disabled = !selected;
+    };
+
+    colorPicker?.addEventListener("change", refreshVariantOptions);
+    sizePicker?.addEventListener("change", refreshVariantOptions);
+    refreshVariantOptions();
+
     addToCartForm.addEventListener("submit", async event => {
         if (event.submitter?.hasAttribute("formaction")) return;
         event.preventDefault();

@@ -2,7 +2,8 @@
 @{
     ViewData["Title"] = "Trang chủ - Bộ sưu tập Giày thể thao chính hãng";
     var currentBrand = ViewBag.CurrentBrand as string ?? "All";
-    var brands = new[] { "All", "Nike", "Adidas", "Jordan", "Puma" };
+    var brands = (ViewBag.Brands as List<string> ?? new List<string>()).Prepend("All").ToList();
+    var colors = ViewBag.Colors as List<string> ?? new List<string>();
 }
 
 <!-- Hero Athletic Banner -->
@@ -37,17 +38,33 @@
             <p class="text-muted small mb-0">Hiển thị @Model.Count sản phẩm cao cấp chính hãng</p>
         </div>
 
-        <!-- Filter Pills -->
-        <div class="d-flex flex-wrap gap-2" id="brands">
-            @foreach (var b in brands)
-            {
-                var isActive = currentBrand.Equals(b, StringComparison.OrdinalIgnoreCase);
-                <a asp-action="Index" asp-route-brand="@(b == "All" ? null : b)" 
-                   class="filter-pill @(isActive ? "active" : "")">
-                    @(b == "All" ? "Tất Cả" : b)
-                </a>
-            }
-        </div>
+        <form asp-action="Index" method="get" class="row g-2 align-items-end w-100">
+            <div class="col-6 col-md">
+                <label class="form-label small mb-1">Thương hiệu</label>
+                <select name="brand" class="form-select">
+                    <option value="">Tất cả</option>
+                    @foreach (var b in brands.Where(x => x != "All"))
+                    {
+                        <option value="@b" selected="@(currentBrand.Equals(b, StringComparison.OrdinalIgnoreCase))">@b</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md">
+                <label class="form-label small mb-1">Màu sắc</label>
+                <select name="color" class="form-select">
+                    <option value="">Tất cả</option>
+                    @foreach (var c in colors)
+                    {
+                        <option value="@c" selected="@(string.Equals(ViewBag.Color as string, c, StringComparison.OrdinalIgnoreCase))">@c</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md"><label class="form-label small mb-1">Size</label><input name="size" type="number" min="1" class="form-control" placeholder="VD: 42" value="@ViewBag.Size"></div>
+            <div class="col-6 col-md"><label class="form-label small mb-1">Giá từ</label><input name="minPrice" type="number" min="0" class="form-control" value="@ViewBag.MinPrice"></div>
+            <div class="col-6 col-md"><label class="form-label small mb-1">Đến giá</label><input name="maxPrice" type="number" min="0" class="form-control" value="@ViewBag.MaxPrice"></div>
+            <div class="col-6 col-md"><label class="form-label small mb-1">Tìm kiếm</label><input name="search" class="form-control" placeholder="Tên, hãng..." value="@ViewBag.SearchQuery"></div>
+            <div class="col-auto"><button class="btn btn-dark rounded-pill px-4">Lọc sản phẩm</button></div>
+        </form>
     </div>
 
     @if (!Model.Any())
@@ -113,11 +130,10 @@
                         </div>
 
                         <div class="shoe-card-footer pt-2">
-                            <button class="btn btn-dark w-100 rounded-pill py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
-                                    onclick="alert('Đã thêm @shoe.Name vào giỏ hàng!')">
+                            <a asp-action="Details" asp-route-id="@shoe.Id" class="btn btn-dark w-100 rounded-pill py-2 fw-semibold d-flex align-items-center justify-content-center gap-2">
                                 <i class="bi bi-cart-plus"></i>
-                                <span>Thêm vào giỏ</span>
-                            </button>
+                                <span>Chọn màu & size</span>
+                            </a>
                         </div>
                     </div>
                 </article>

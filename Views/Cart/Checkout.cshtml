@@ -52,16 +52,16 @@
                         <label class="p-3 border rounded-3 d-flex align-items-center gap-3 cursor-pointer">
                             <input type="radio" asp-for="PaymentMethod" value="QR" class="form-check-input mt-0">
                             <div>
-                                <strong class="d-block text-dark">Chuyển khoản VietQR / MoMo</strong>
-                                <small class="text-muted">Quét mã QR qua ứng dụng ngân hàng nhanh chóng và chính xác 100%.</small>
+                                <strong class="d-block text-dark">Chuyển khoản QR (mô phỏng)</strong>
+                                <small class="text-muted">Tạo đơn QR Mock để hiển thị thông tin chuyển khoản giả lập; không phát sinh giao dịch ngân hàng thật.</small>
                             </div>
                         </label>
 
                         <label class="p-3 border rounded-3 d-flex align-items-center gap-3 cursor-pointer">
-                            <input type="radio" asp-for="PaymentMethod" value="CARD" class="form-check-input mt-0">
+                            <input type="radio" asp-for="PaymentMethod" value="CARD" class="form-check-input mt-0" disabled>
                             <div>
-                                <strong class="d-block text-dark">Thẻ Tín dụng / Ghi nợ quốc tế</strong>
-                                <small class="text-muted">Hỗ trợ thanh toán bảo mật Visa, MasterCard, JCB.</small>
+                                <strong class="d-block text-dark">Thẻ (chưa bật)</strong>
+                                <small class="text-muted">Luồng thanh toán thẻ chưa được bật trong phiên bản Storefront này.</small>
                             </div>
                         </label>
                     </div>
