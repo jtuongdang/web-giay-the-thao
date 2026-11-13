@@ -1,0 +1,304 @@
+@model List<ProductVariant>
+@{
+    ViewData["Title"] = "Quản Lý Kho & Cảnh Báo Tồn Sắp Hết";
+    var onlyLowStock = (bool)(ViewBag.OnlyLowStock ?? false);
+    var currentBrand = ViewBag.CurrentBrand as string ?? "All";
+    var searchQuery = ViewBag.SearchQuery as string ?? "";
+    var brands = ViewBag.Brands as List<string> ?? new List<string>();
+    var recentTransactions = ViewBag.RecentTransactions as List<InventoryTransaction> ?? new List<InventoryTransaction>();
+    var currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    var totalPages = (int)(ViewBag.TotalPages ?? 1);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+
+    var totalVariants = (int)(ViewBag.TotalVariantCount ?? 0);
+    var totalStock = (int)(ViewBag.TotalStockPieces ?? 0);
+    var totalReserved = (int)(ViewBag.TotalReservedPieces ?? 0);
+    var lowStockCount = (int)(ViewBag.LowStockCount ?? 0);
+    var outOfStockCount = (int)(ViewBag.OutOfStockCount ?? 0);
+}
+
+<!-- Inventory Summary KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+            <span class="text-muted small fw-bold text-uppercase">Tổng Số Biến Thể (Size/Màu)</span>
+            <div class="d-flex align-items-center justify-content-between mt-1">
+                <h3 class="mb-0 fw-extrabold text-dark">@totalVariants</h3>
+                <span class="badge bg-light text-dark border">@totalStock đôi tồn</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+            <span class="text-muted small fw-bold text-uppercase">Đang Giữ Chỗ (Đơn Pending)</span>
+            <div class="d-flex align-items-center justify-content-between mt-1">
+                <h3 class="mb-0 fw-extrabold text-primary">@totalReserved đôi</h3>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Reserved</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+            <span class="text-muted small fw-bold text-uppercase">Cảnh Báo Sắp Hết Hàng</span>
+            <div class="d-flex align-items-center justify-content-between mt-1">
+                <h3 class="mb-0 fw-extrabold text-warning">@lowStockCount</h3>
+                <a asp-action="Inventory" asp-route-onlyLowStock="true" class="badge bg-warning text-dark text-decoration-none">
+                    Lọc xem ngay
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+            <span class="text-muted small fw-bold text-uppercase">Hết Hàng Tuyệt Đối</span>
+            <div class="d-flex align-items-center justify-content-between mt-1">
+                <h3 class="mb-0 fw-extrabold text-danger">@outOfStockCount</h3>
+                <span class="badge bg-danger text-white">0 đôi</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3">
+        <div class="row g-3 align-items-center">
+            <!-- Tabs / Toggle Low Stock -->
+            <div class="col-lg-6">
+                <div class="btn-group" role="group">
+                    <a asp-action="Inventory" asp-route-onlyLowStock="false" asp-route-brand="@currentBrand" asp-route-search="@searchQuery"
+                       class="btn btn-sm @(!onlyLowStock ? "btn-dark fw-bold" : "btn-outline-secondary")">
+                        Tất cả tồn kho (@totalVariants)
+                    </a>
+                    <a asp-action="Inventory" asp-route-onlyLowStock="true" asp-route-brand="@currentBrand" asp-route-search="@searchQuery"
+                       class="btn btn-sm @(onlyLowStock ? "btn-danger fw-bold" : "btn-outline-danger")">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Cảnh báo sắp hết (@lowStockCount)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Brand & Search Filters -->
+            <div class="col-lg-6">
+                <form method="get" asp-action="Inventory" class="d-flex gap-2 justify-content-lg-end">
+                    <input type="hidden" name="onlyLowStock" value="@onlyLowStock.ToString().ToLower()" />
+                    <select name="brand" class="form-select form-select-sm" style="max-width: 150px;">
+                        <option value="All">Tất cả hãng</option>
+                        @foreach (var b in brands)
+                        {
+                            <option value="@b" selected="@(currentBrand == b)">@b</option>
+                        }
+                    </select>
+                    <input type="search" name="search" class="form-control form-control-sm" placeholder="Tìm tên giày, SKU..." value="@searchQuery" style="max-width: 220px;" />
+                    <button type="submit" class="btn btn-sm btn-dark">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    @if (!string.IsNullOrEmpty(searchQuery) || currentBrand != "All" || onlyLowStock)
+                    {
+                        <a asp-action="Inventory" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </a>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Inventory Variants Table -->
+<div class="admin-card mb-4">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title @(onlyLowStock ? "text-danger" : "")">
+            <i class="bi bi-box-seam"></i> @(onlyLowStock ? "Bảng Cảnh Báo Tồn Kho Sắp Hết (Low Stock Alert)" : "Bảng Chi Tiết Tồn Kho Theo Biến Thể Size")
+        </h3>
+        <span class="text-muted small">Hiển thị @Model.Count trên tổng số @totalCount biến thể</span>
+    </div>
+    <div class="admin-card-body p-0">
+        @if (Model.Count == 0)
+        {
+            <div class="p-5 text-center text-muted">
+                <i class="bi bi-check-circle fs-1 text-success mb-2 d-block"></i>
+                <div class="fw-bold">Không có biến thể nào chạm ngưỡng cảnh báo tồn kho sắp hết.</div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm giày</th>
+                            <th>Hãng</th>
+                            <th>Size / Màu</th>
+                            <th>Mã SKU biến thể</th>
+                            <th class="text-end">Giá vốn BQGQ</th>
+                            <th class="text-end">Giá bán lẻ</th>
+                            <th class="text-center">Tồn thực tế</th>
+                            <th class="text-center">Giữ chỗ</th>
+                            <th class="text-center">Khả dụng</th>
+                            <th class="text-center">Ngưỡng cảnh báo</th>
+                            <th>Trạng thái tồn</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var v in Model)
+                        {
+                            var isLow = v.StockQuantity <= v.MinStockAlert;
+                            var isOut = v.StockQuantity == 0;
+                            var available = v.StockQuantity - v.ReservedQuantity;
+
+                            <tr class="@(isOut ? "row-out-of-stock" : (isLow ? "row-low-stock" : ""))">
+                                <td>
+                                    <div class="fw-bold text-dark">@v.Product.Name</div>
+                                    <div class="small text-muted">SKU gốc: @v.Product.Sku</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@v.Product.Brand</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-dark me-1">Size @v.Size</span>
+                                    <span class="text-muted small">@v.Color</span>
+                                </td>
+                                <td class="font-monospace small">@v.VariantSku</td>
+                                <td class="text-end text-muted">@v.CostPrice.ToString("N0") đ</td>
+                                <td class="text-end fw-semibold">@v.Product.RetailPrice.ToString("N0") đ</td>
+                                <td class="text-center fw-extrabold fs-6 @(isOut ? "text-danger" : (isLow ? "text-warning" : "text-dark"))">
+                                    @v.StockQuantity
+                                </td>
+                                <td class="text-center text-muted">
+                                    @v.ReservedQuantity
+                                </td>
+                                <td class="text-center fw-bold @(available <= 0 ? "text-danger" : "text-success")">
+                                    @available
+                                </td>
+                                <td class="text-center text-muted">
+                                    @v.MinStockAlert
+                                </td>
+                                <td>
+                                    @if (isOut)
+                                    {
+                                        <span class="badge bg-danger text-white px-2 py-1">
+                                            <i class="bi bi-x-circle-fill"></i> HẾT HÀNG
+                                        </span>
+                                    }
+                                    else if (isLow)
+                                    {
+                                        <span class="badge-low-stock">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> SẮP HẾT
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                            <i class="bi bi-check-circle"></i> Đủ hàng
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <a asp-action="CreatePurchaseOrder" asp-route-preselectVariantId="@v.Id" class="btn btn-sm btn-outline-danger" title="Nhập hàng ngay">
+                                        <i class="bi bi-plus-circle me-1"></i> Nhập kho
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1)
+    {
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+            <span class="small text-muted">Trang @currentPage / @totalPages</span>
+            <ul class="pagination pagination-sm mb-0">
+                @for (int p = 1; p <= totalPages; p++)
+                {
+                    <li class="page-item @(p == currentPage ? "active" : "")">
+                        <a class="page-link" asp-action="Inventory" asp-route-page="@p" asp-route-onlyLowStock="@onlyLowStock" asp-route-brand="@currentBrand" asp-route-search="@searchQuery">@p</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+<!-- Stock Ledger Transactions (InventoryTransactions) -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title text-dark">
+            <i class="bi bi-journal-text"></i> Nhật Ký Sổ Cái Kho (Inventory Transactions - 10 giao dịch gần nhất)
+        </h3>
+    </div>
+    <div class="admin-card-body p-0">
+        @if (recentTransactions.Count == 0)
+        {
+            <div class="p-4 text-center text-muted">
+                Chưa có giao dịch sổ cái kho nào.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Mã giao dịch</th>
+                            <th>Loại giao dịch</th>
+                            <th>Sản phẩm / Size</th>
+                            <th class="text-center">Biến động</th>
+                            <th class="text-center">Trước -> Sau</th>
+                            <th>Tham chiếu</th>
+                            <th>Thời gian</th>
+                            <th>Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tx in recentTransactions)
+                        {
+                            <tr>
+                                <td class="fw-bold font-monospace small">@tx.TxCode</td>
+                                <td>
+                                    @switch (tx.TxType)
+                                    {
+                                        case "IMPORT":
+                                            <span class="badge bg-success">NHẬP KHO</span>
+                                            break;
+                                        case "EXPORT_SALE":
+                                            <span class="badge bg-primary">XUẤT BÁN</span>
+                                            break;
+                                        case "RETURN":
+                                            <span class="badge bg-warning text-dark">HOÀN KHO</span>
+                                            break;
+                                        case "EXCHANGE_OUT":
+                                            <span class="badge bg-info text-white">XUẤT ĐỔI</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary">@tx.TxType</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@tx.ProductVariant.Product.Name</div>
+                                    <div class="small text-muted">Size @tx.ProductVariant.Size &bull; SKU: @tx.ProductVariant.VariantSku</div>
+                                </td>
+                                <td class="text-center fw-extrabold @(tx.QuantityChange > 0 ? "text-success" : "text-danger")">
+                                    @(tx.QuantityChange > 0 ? $"+{tx.QuantityChange}" : tx.QuantityChange.ToString())
+                                </td>
+                                <td class="text-center small">
+                                    @tx.QuantityBefore &rarr; <strong>@tx.QuantityAfter</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@tx.ReferenceType #@tx.ReferenceId</span>
+                                </td>
+                                <td class="small text-muted">@tx.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="small text-muted" style="max-width: 200px;">@tx.Note</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

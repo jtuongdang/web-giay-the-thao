@@ -1,0 +1,188 @@
+@model CreatePurchaseOrderInputModel
+@{
+    ViewData["Title"] = "Tạo Đơn Nhập Hàng Mới (Purchase Order)";
+    var suppliers = ViewBag.Suppliers as List<Supplier> ?? new List<Supplier>();
+    var variants = ViewBag.Variants as dynamic;
+    var preselectVariantId = (int)(ViewBag.PreselectVariantId ?? 0);
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <a asp-action="PurchaseOrders" class="btn btn-sm btn-outline-secondary mb-2">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách PO
+        </a>
+        <h2 class="h4 fw-extrabold mb-0">Tạo Đơn Nhập Hàng (PO)</h2>
+    </div>
+</div>
+
+<form method="post" asp-action="CreatePurchaseOrder" id="createPoForm">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-4">
+        <!-- Main Form Left: Items Table -->
+        <div class="col-lg-8">
+            <div class="admin-card mb-4">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">
+                        <i class="bi bi-box-seam text-primary"></i> Danh Sách Mặt Hàng Nhập Kho
+                    </h3>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddPoItemRow">
+                        <i class="bi bi-plus-circle me-1"></i> Thêm mặt hàng
+                    </button>
+                </div>
+                <div class="admin-card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table admin-table mb-0" id="poItemsTable">
+                            <thead>
+                                <tr>
+                                    <th>Biến thể giày (Model - Size - Màu)</th>
+                                    <th style="width: 130px;">Số lượng</th>
+                                    <th style="width: 190px;">Đơn giá nhập (VNĐ)</th>
+                                    <th class="text-end" style="width: 170px;">Thành tiền</th>
+                                    <th class="text-center" style="width: 60px;">Xóa</th>
+                                </tr>
+                            </thead>
+                            <tbody id="poItemsTableBody">
+                                <tr>
+                                    <td>
+                                        <select name="Items[0].ProductVariantId" class="form-select item-variant-select" required>
+                                            <option value="">-- Chọn biến thể giày (Size / Màu) --</option>
+                                            @if (variants != null)
+                                            {
+                                                foreach (var v in variants)
+                                                {
+                                                    if (v.Id == preselectVariantId)
+                                                    {
+                                                        <option value="@v.Id" data-cost="@v.CostPrice" selected>
+                                                            @v.ProductName (Sz @v.Size, @v.Color) - Hiện có: @v.StockQuantity đôi
+                                                        </option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@v.Id" data-cost="@v.CostPrice">
+                                                            @v.ProductName (Sz @v.Size, @v.Color) - Hiện có: @v.StockQuantity đôi
+                                                        </option>
+                                                    }
+                                                }
+                                            }
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="Items[0].Quantity" class="form-control item-qty" min="1" value="10" required />
+                                    </td>
+                                    <td>
+                                        <input type="number" name="Items[0].UnitCost" class="form-control item-cost" min="0" step="1000" value="0" required />
+                                    </td>
+                                    <td class="text-end fw-bold item-total">0 đ</td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes or Policy -->
+            <div class="card bg-light border-0 p-3 rounded-3">
+                <div class="d-flex gap-2">
+                    <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+                    <div class="small text-muted">
+                        <strong>Công thức Giá vốn Bình quân Gia quyền:</strong>
+                        Khi nhập kho, đơn giá vốn mới của từng biến thể sẽ được tính tự động theo công thức:
+                        <br />
+                        <code>CostPrice = ((Tồn_cũ * GiáVốn_cũ) + (SL_nhập * Giá_nhập)) / (Tồn_cũ + SL_nhập)</code>.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Right: Supplier, Payment, Summary -->
+        <div class="col-lg-4">
+            <!-- Supplier selection card -->
+            <div class="admin-card mb-4">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">
+                        <i class="bi bi-building"></i> Nhà Cung Cấp
+                    </h3>
+                </div>
+                <div class="admin-card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Chọn Nhà Cung Cấp <span class="text-danger">*</span></label>
+                        <select name="SupplierId" class="form-select" required>
+                            <option value="">-- Chọn Nhà cung cấp --</option>
+                            @foreach (var sup in suppliers)
+                            {
+                                <option value="@sup.Id">@sup.Name (Nợ hiện tại: @sup.CurrentDebt.ToString("N0") đ)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-check form-switch p-3 bg-light rounded-3 border">
+                        <input class="form-check-input ms-0 me-3" type="checkbox" name="ReceiveImmediately" value="true" id="checkReceiveImmediately" checked />
+                        <label class="form-check-label fw-bold" for="checkReceiveImmediately">
+                            Xác nhận nhập kho ngay (Received)
+                        </label>
+                        <div class="small text-muted ps-1">
+                            Hàng sẽ được cộng tồn kho và tính lại giá vốn ngay lập tức.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment and summary card -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">
+                        <i class="bi bi-cash-stack"></i> Thanh Toán & Công Nợ
+                    </h3>
+                </div>
+                <div class="admin-card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Tổng tiền hàng PO:</span>
+                        <span class="fs-4 fw-extrabold text-danger" id="poTotalAmountDisplay">0 đ</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số Tiền Trả Trước (VNĐ)</label>
+                        <input type="number" name="PaidAmount" id="poPaidAmountInput" class="form-control" min="0" step="1000" value="0" />
+                        <div class="form-text">Nhập 0 nếu lấy hàng nợ 100%.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Phương Thức Thanh Toán Trả Trước</label>
+                        <select name="PaymentMethod" class="form-select">
+                            <option value="Chuyển khoản">Chuyển khoản ngân hàng</option>
+                            <option value="Tiền mặt">Tiền mặt tại kho</option>
+                        </select>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fw-bold">Nợ ghi thêm cho NCC:</span>
+                        <span class="fs-5 fw-bold text-warning" id="poDebtBalanceDisplay">0 đ</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-admin-accent w-100 py-2 fs-6">
+                        <i class="bi bi-check2-circle me-1"></i> Lưu & Hoàn Tất Phiếu Nhập
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        // Store pre-rendered option html for fast client-side row cloning
+        window.poVariantOptionsHtml = `@if (variants != null) {
+            foreach (var v in variants) {
+                <text><option value="@v.Id" data-cost="@v.CostPrice">@v.ProductName (Sz @v.Size, @v.Color) - Hiện có: @v.StockQuantity đôi</option></text>
+            }
+        }`;
+    </script>
+}

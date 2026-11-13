@@ -1,0 +1,298 @@
+@model List<Supplier>
+@{
+    ViewData["Title"] = "Quản Lý Nhà Cung Cấp & Công Nợ";
+    var totalDebt = (decimal)(ViewBag.TotalDebt ?? 0m);
+    var recentPayments = ViewBag.RecentPayments as List<SupplierPayment> ?? new List<SupplierPayment>();
+    var searchQuery = ViewBag.SearchQuery as string ?? "";
+    var currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    var totalPages = (int)(ViewBag.TotalPages ?? 1);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+}
+
+<!-- Top Header & Actions -->
+<div class="row g-3 align-items-center mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-3 bg-white rounded-3 d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <span class="text-muted small fw-bold text-uppercase">Tổng Công Nợ Cần Trả NCC</span>
+                <h3 class="mb-0 fw-extrabold text-danger mt-1">@totalDebt.ToString("N0") đ</h3>
+            </div>
+            <div class="kpi-icon icon-cogs">
+                <i class="bi bi-wallet2"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <button type="button" class="btn btn-outline-dark me-2" data-bs-toggle="modal" data-bs-target="#createSupplierModal">
+            <i class="bi bi-plus-lg me-1"></i> Thêm NCC Mới
+        </button>
+        <button type="button" class="btn btn-admin-accent" data-bs-toggle="modal" data-bs-target="#recordPaymentModal">
+            <i class="bi bi-cash-coin me-1"></i> Ghi Nhận Phiếu Chi Trả Nợ
+        </button>
+    </div>
+</div>
+
+<!-- Suppliers Table -->
+<div class="admin-card mb-4">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title">
+            <i class="bi bi-building"></i> Danh Sách Nhà Cung Cấp & Công Nợ
+        </h3>
+        <span class="text-muted small">Tổng số: @totalCount nhà cung cấp</span>
+    </div>
+    <div class="admin-card-body p-0">
+        @if (Model.Count == 0)
+        {
+            <div class="p-5 text-center text-muted">
+                <i class="bi bi-building-x fs-1 mb-2 d-block"></i>
+                <div class="fw-bold">Chưa có dữ liệu nhà cung cấp.</div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Mã NCC</th>
+                            <th>Tên Nhà Cung Cấp</th>
+                            <th>Liên hệ</th>
+                            <th class="text-center">Số đơn PO</th>
+                            <th class="text-end">Công nợ hiện tại</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-dark">@s.Code</td>
+                                <td>
+                                    <div class="fw-bold fs-6">@s.Name</div>
+                                    <div class="small text-muted text-truncate" style="max-width: 250px;">
+                                        @(s.Address ?? "Chưa cập nhật địa chỉ")
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small"><i class="bi bi-telephone"></i> @(s.Phone ?? "Chưa có")</div>
+                                    <div class="small text-muted"><i class="bi bi-envelope"></i> @(s.Email ?? "Chưa có")</div>
+                                </td>
+                                <td class="text-center fw-bold">
+                                    <span class="badge bg-light text-dark border px-2 py-1">
+                                        @s.PurchaseOrders.Count đơn PO
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="fs-6 fw-extrabold @(s.CurrentDebt > 0 ? "text-danger" : "text-success")">
+                                        @s.CurrentDebt.ToString("N0") đ
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    @if (s.CurrentDebt > 0)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-pay-debt"
+                                                data-bs-toggle="modal" data-bs-target="#recordPaymentModal"
+                                                data-supplier-id="@s.Id" data-debt="@s.CurrentDebt">
+                                            <i class="bi bi-cash"></i> Trả nợ
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-success small fw-semibold">
+                                            <i class="bi bi-check-circle"></i> Không nợ
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Recent Debt Payments History -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title text-success">
+            <i class="bi bi-clock-history"></i> Lịch Sử Phiếu Chi Trả Nợ Gần Nhất (Supplier Payments)
+        </h3>
+        <a asp-action="CashFlow" class="btn btn-sm btn-admin-outline">
+            Xem toàn bộ sổ quỹ
+        </a>
+    </div>
+    <div class="admin-card-body p-0">
+        @if (recentPayments.Count == 0)
+        {
+            <div class="p-4 text-center text-muted">
+                Chưa có phiếu chi trả nợ NCC nào được ghi nhận.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Mã phiếu chi</th>
+                            <th>Nhà cung cấp</th>
+                            <th>Đơn PO</th>
+                            <th class="text-end">Số tiền chi trả</th>
+                            <th>Phương thức</th>
+                            <th>Thời gian</th>
+                            <th>Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in recentPayments)
+                        {
+                            <tr>
+                                <td class="fw-bold">@p.PaymentCode</td>
+                                <td class="fw-semibold">@p.Supplier.Name</td>
+                                <td>
+                                    @(p.PurchaseOrder != null ? p.PurchaseOrder.PoCode : "Trả nợ chung")
+                                </td>
+                                <td class="text-end fw-extrabold text-danger">
+                                    -@p.Amount.ToString("N0") đ
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@p.PaymentMethod</span>
+                                </td>
+                                <td class="small text-muted">@p.PaidAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="small text-muted" style="max-width: 200px;">@p.Note</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal: Record Supplier Payment (Ghi nhận phiếu chi trả nợ NCC) -->
+<div class="modal fade" id="recordPaymentModal" tabindex="-1" aria-labelledby="recordPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form method="post" asp-action="CreateSupplierPayment">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="recordPaymentModalLabel">
+                        <i class="bi bi-cash-coin me-1"></i> Ghi Nhận Phiếu Chi Trả Nợ Nhà Cung Cấp
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Chọn Nhà Cung Cấp <span class="text-danger">*</span></label>
+                        <select name="supplierId" id="paymentSupplierSelect" class="form-select" required>
+                            <option value="">-- Chọn Nhà cung cấp cần trả nợ --</option>
+                            @foreach (var s in Model)
+                            {
+                                <option value="@s.Id">@s.Name (Còn nợ: @s.CurrentDebt.ToString("N0") đ)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Chọn Đơn Nhập Hàng Cụ Thể (Tùy chọn)</label>
+                        <select name="purchaseOrderId" id="paymentPoSelect" class="form-select">
+                            <option value="">-- Trả chung vào tổng nợ (không chỉ định PO) --</option>
+                        </select>
+                        <div class="form-text">Nếu chọn PO cụ thể, số tiền đã thanh toán của PO đó sẽ được tự động cập nhật.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số Tiền Chi Trả (VNĐ) <span class="text-danger">*</span></label>
+                        <input type="number" name="amount" id="paymentAmountInput" class="form-control" min="1000" step="1000" required />
+                        <div class="form-text">Hệ thống sẽ tự động trừ công nợ NCC và sinh phiếu chi SUPPLIER_PAYMENT trong Sổ quỹ.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Phương Thức Thanh Toán</label>
+                        <select name="paymentMethod" class="form-select">
+                            <option value="Chuyển khoản">Chuyển khoản ngân hàng</option>
+                            <option value="Tiền mặt">Tiền mặt tại kho</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ghi Chú</label>
+                        <input type="text" name="note" class="form-control" placeholder="Ví dụ: Trả đợt 1 tiền hàng tháng 11..." />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="bi bi-check-circle me-1"></i> Xác Nhận Chi Tiền
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Create Supplier (Thêm NCC) -->
+<div class="modal fade" id="createSupplierModal" tabindex="-1" aria-labelledby="createSupplierModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form method="post" asp-action="CreateSupplier">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="createSupplierModalLabel">
+                        <i class="bi bi-building-add me-1"></i> Thêm Nhà Cung Cấp Mới
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mã Nhà Cung Cấp <span class="text-danger">*</span></label>
+                        <input type="text" name="code" class="form-control" placeholder="VD: PUMA-DISTRIBUTOR" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên Nhà Cung Cấp <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="VD: Công ty TNHH Phân Phối Puma VN" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số Điện Thoại</label>
+                        <input type="text" name="phone" class="form-control" placeholder="VD: 0909123456" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        <input type="email" name="email" class="form-control" placeholder="VD: contact@supply.vn" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Địa Chỉ</label>
+                        <input type="text" name="address" class="form-control" placeholder="VD: KCN Tân Bình, TP.HCM" />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-admin-accent px-4">
+                        <i class="bi bi-check-circle me-1"></i> Lưu Nhà Cung Cấp
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-pay-debt').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const supplierId = btn.getAttribute('data-supplier-id');
+                const debt = btn.getAttribute('data-debt');
+                const select = document.getElementById('paymentSupplierSelect');
+                const amountInput = document.getElementById('paymentAmountInput');
+                if (select) {
+                    select.value = supplierId;
+                    select.dispatchEvent(new Event('change'));
+                }
+                if (amountInput && debt) {
+                    amountInput.value = debt;
+                }
+            });
+        });
+    </script>
+}

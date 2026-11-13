@@ -1,0 +1,239 @@
+@model List<OrderReturn>
+@{
+    ViewData["Title"] = "Xử Lý Đổi Hàng & Hoàn Tiền (RMA)";
+    var completedOrders = ViewBag.CompletedOrders as dynamic;
+    var availableVariants = ViewBag.AvailableVariants as dynamic;
+    var searchQuery = ViewBag.SearchQuery as string ?? "";
+    var currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    var totalPages = (int)(ViewBag.TotalPages ?? 1);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+}
+
+<!-- Top Action Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <p class="text-muted mb-0 small">
+            Quy trình Đổi size / Đổi mẫu và Trả hàng hoàn tiền (chỉ áp dụng cho các đơn hàng đã ở trạng thái <strong>Completed</strong>).
+        </p>
+    </div>
+    <button type="button" class="btn btn-admin-accent" data-bs-toggle="modal" data-bs-target="#createRmaModal">
+        <i class="bi bi-plus-circle me-1"></i> Tạo Yêu Cầu Đổi / Trả Hàng
+    </button>
+</div>
+
+<!-- Returns Table -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title">
+            <i class="bi bi-arrow-left-right text-primary"></i> Danh Sách Phiếu Đổi Hàng & Hoàn Tiền (RMA)
+        </h3>
+        <span class="text-muted small">Tổng số: @totalCount phiếu</span>
+    </div>
+    <div class="admin-card-body p-0">
+        @if (Model.Count == 0)
+        {
+            <div class="p-5 text-center text-muted">
+                <i class="bi bi-check-circle fs-1 text-success mb-2 d-block"></i>
+                <div class="fw-bold">Chưa có yêu cầu đổi hàng hoặc hoàn tiền nào.</div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Mã RMA</th>
+                            <th>Đơn hàng</th>
+                            <th>Loại yêu cầu</th>
+                            <th>Mặt hàng đổi / trả</th>
+                            <th>Hàng mới đổi sang</th>
+                            <th class="text-end">Tiền hoàn (nếu có)</th>
+                            <th>Lý do</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày xử lý</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var rma in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-dark">@rma.ReturnCode</td>
+                                <td>
+                                    <a asp-action="OrderDetail" asp-route-id="@rma.OrderId" class="fw-semibold text-primary text-decoration-none">
+                                        @rma.Order.OrderCode
+                                    </a>
+                                    <div class="small text-muted">@rma.Order.CustomerName</div>
+                                </td>
+                                <td>
+                                    @if (rma.ReturnType == "EXCHANGE")
+                                    {
+                                        <span class="badge bg-primary px-2 py-1">ĐỔI SIZE/MẪU</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger px-2 py-1">HOÀN TIỀN</span>
+                                    }
+                                </td>
+                                <td>
+                                    @foreach (var item in rma.Items)
+                                    {
+                                        <div>
+                                            <strong>@item.OriginalVariant.Product.Name</strong>
+                                            <span class="small text-muted">(Sz @item.OriginalVariant.Size, @item.OriginalVariant.Color) x @item.Quantity</span>
+                                        </div>
+                                        @if (item.IsResellable)
+                                        {
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle small">Đã nhập lại kho</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary small">Không thể bán lại</span>
+                                        }
+                                    }
+                                </td>
+                                <td>
+                                    @foreach (var item in rma.Items)
+                                    {
+                                        @if (item.ExchangeVariant != null)
+                                        {
+                                            <div>
+                                                <strong class="text-success">@item.ExchangeVariant.Product.Name</strong>
+                                                <span class="small text-muted">(Sz @item.ExchangeVariant.Size, @item.ExchangeVariant.Color) x @item.Quantity</span>
+                                            </div>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">Đã xuất đổi</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    }
+                                </td>
+                                <td class="text-end fw-bold @(rma.RefundAmount > 0 ? "text-danger" : "text-muted")">
+                                    @(rma.RefundAmount > 0 ? $"{rma.RefundAmount:N0} đ" : "0 đ")
+                                </td>
+                                <td class="small" style="max-width: 180px;">@rma.Reason</td>
+                                <td>
+                                    <span class="badge-status status-completed">
+                                        <i class="bi bi-check-circle-fill"></i> @rma.Status
+                                    </span>
+                                </td>
+                                <td class="small text-muted">
+                                    @rma.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal: Create RMA (Exchange / Refund) -->
+<div class="modal fade" id="createRmaModal" tabindex="-1" aria-labelledby="createRmaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <form method="post" asp-action="CreateReturn">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="createRmaModalLabel">
+                        <i class="bi bi-arrow-left-right me-1"></i> Tạo Phiếu Đổi Size / Trả Hàng Hoàn Tiền
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <!-- 1. Select Order (Completed) -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">1. Chọn Đơn Hàng Hoàn Tất (Completed) <span class="text-danger">*</span></label>
+                            <select name="OrderId" id="rmaOrderSelect" class="form-select" required>
+                                <option value="">-- Chọn đơn hàng --</option>
+                                @if (completedOrders != null)
+                                {
+                                    foreach (var o in completedOrders)
+                                    {
+                                        <option value="@o.Id">Đơn @o.OrderCode - @o.CustomerName - Tổng: @string.Format("{0:N0} đ", o.TotalAmount)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <!-- 2. Select Original Product to Return -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">2. Chọn Sản Phẩm Khách Muốn Đổi/Trả <span class="text-danger">*</span></label>
+                            <select name="OriginalVariantId" id="rmaOriginalVariantSelect" class="form-select" required>
+                                <option value="">-- Chọn đơn hàng trước để tải sản phẩm --</option>
+                            </select>
+                        </div>
+
+                        <!-- 3. Return Type -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">3. Loại Yêu Cầu <span class="text-danger">*</span></label>
+                            <select name="ReturnType" id="rmaTypeSelect" class="form-select" required>
+                                <option value="EXCHANGE">Đổi Size / Đổi Mẫu Giày (EXCHANGE)</option>
+                                <option value="REFUND">Trả Hàng Hoàn Tiền (REFUND)</option>
+                            </select>
+                        </div>
+
+                        <!-- Quantity -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Số Lượng <span class="text-danger">*</span></label>
+                            <input type="number" name="Quantity" class="form-control" value="1" min="1" required />
+                        </div>
+
+                        <!-- 4. Exchange Variant (Visible if EXCHANGE) -->
+                        <div class="col-md-12" id="rmaExchangeVariantWrap">
+                            <label class="form-label fw-bold text-primary">
+                                <i class="bi bi-box-arrow-right"></i> Chọn Biến Thể Mới Muốn Đổi Sang <span class="text-danger">*</span>
+                            </label>
+                            <select name="ExchangeVariantId" class="form-select">
+                                <option value="">-- Chọn biến thể mới trong kho còn hàng --</option>
+                                @if (availableVariants != null)
+                                {
+                                    foreach (var v in availableVariants)
+                                    {
+                                        <option value="@v.Id">@v.Name (Size @v.Size, @v.Color) - Còn khả dụng: @v.Available - Giá: @string.Format("{0:N0} đ", v.Price)</option>
+                                    }
+                                }
+                            </select>
+                            <div class="form-text">Hệ thống sẽ tự động trừ tồn kho mới và ghi nhận sổ quỹ nếu có chênh lệch giá.</div>
+                        </div>
+
+                        <!-- 5. Refund Amount (Visible if REFUND) -->
+                        <div class="col-md-12" id="rmaRefundAmountWrap" style="display: none;">
+                            <label class="form-label fw-bold text-danger">
+                                <i class="bi bi-cash"></i> Số Tiền Hoàn Lại (VNĐ) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" name="RefundAmount" id="rmaRefundAmountInput" class="form-control" step="1000" min="0" value="0" />
+                            <div class="form-text">Hệ thống sẽ tự động sinh phiếu chi CUSTOMER_REFUND trong sổ quỹ.</div>
+                        </div>
+
+                        <!-- Resellable Condition -->
+                        <div class="col-md-12">
+                            <div class="form-check form-switch p-3 bg-light rounded-3 border">
+                                <input class="form-check-input ms-0 me-3" type="checkbox" name="IsResellable" value="true" id="checkResellable" checked />
+                                <label class="form-check-label fw-bold" for="checkResellable">
+                                    Giày hoàn trả còn nguyên tem, hộp, có thể bán lại (Nhập lại kho)
+                                </label>
+                                <div class="small text-muted ps-1">Nếu tích chọn: kho sẽ tự động cộng lại số lượng cho biến thể cũ.</div>
+                            </div>
+                        </div>
+
+                        <!-- Reason -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Lý Do Đổi/Trả <span class="text-danger">*</span></label>
+                            <textarea name="Reason" class="form-control" rows="2" placeholder="Ví dụ: Khách thử bị chật mu bàn chân, cần đổi lên size 42..." required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-admin-accent px-4">
+                        <i class="bi bi-check-circle me-1"></i> Xác Nhận Xử Lý RMA
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

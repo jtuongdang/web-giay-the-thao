@@ -1,0 +1,295 @@
+@model Order
+@{
+    ViewData["Title"] = $"Chi Tiết Đơn Hàng #{Model.OrderCode}";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Orders" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+        <h2 class="h4 fw-extrabold mb-0">Đơn hàng: <span class="text-primary">@Model.OrderCode</span></h2>
+        @switch (Model.OrderStatus)
+        {
+            case "Pending":
+                <span class="badge-status status-pending">Chờ duyệt</span>
+                break;
+            case "Confirmed":
+                <span class="badge-status status-confirmed">Đã duyệt xuất kho</span>
+                break;
+            case "Shipping":
+                <span class="badge-status status-shipping">Đang giao hàng</span>
+                break;
+            case "Completed":
+                <span class="badge-status status-completed">Hoàn tất</span>
+                break;
+            case "Cancelled":
+                <span class="badge-status status-cancelled">Đã hủy</span>
+                break;
+            default:
+                <span class="badge-status status-draft">@Model.OrderStatus</span>
+                break;
+        }
+    </div>
+
+    <!-- Action Buttons according to state machine -->
+    <div class="d-flex gap-2">
+        @if (Model.OrderStatus == "Pending")
+        {
+            <form method="post" asp-action="UpdateOrderStatus" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="orderId" value="@Model.Id" />
+                <input type="hidden" name="newStatus" value="Confirmed" />
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Duyệt đơn và chuyển sang trạng thái đã xuất kho?');">
+                    <i class="bi bi-check-lg"></i> Duyệt đơn (Confirmed)
+                </button>
+            </form>
+            <form method="post" asp-action="UpdateOrderStatus" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="orderId" value="@Model.Id" />
+                <input type="hidden" name="newStatus" value="Cancelled" />
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Hủy đơn hàng này?');">
+                    <i class="bi bi-x-lg"></i> Hủy đơn (Cancelled)
+                </button>
+            </form>
+        }
+        else if (Model.OrderStatus == "Confirmed")
+        {
+            <form method="post" asp-action="UpdateOrderStatus" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="orderId" value="@Model.Id" />
+                <input type="hidden" name="newStatus" value="Shipping" />
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('Bàn giao vận chuyển?');">
+                    <i class="bi bi-truck"></i> Giao hàng (Shipping)
+                </button>
+            </form>
+            <form method="post" asp-action="UpdateOrderStatus" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="orderId" value="@Model.Id" />
+                <input type="hidden" name="newStatus" value="Cancelled" />
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Hủy đơn và hoàn trả kho?');">
+                    <i class="bi bi-x-lg"></i> Hủy đơn (Cancelled)
+                </button>
+            </form>
+        }
+        else if (Model.OrderStatus == "Shipping")
+        {
+            <form method="post" asp-action="UpdateOrderStatus" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="orderId" value="@Model.Id" />
+                <input type="hidden" name="newStatus" value="Completed" />
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Đơn hàng đã giao thành công?');">
+                    <i class="bi bi-check2-all"></i> Hoàn tất (Completed)
+                </button>
+            </form>
+        }
+        else if (Model.OrderStatus == "Completed")
+        {
+            <a asp-action="Returns" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-arrow-left-right"></i> Tạo yêu cầu Đổi size / Hoàn tiền
+            </a>
+        }
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Customer & Delivery Info -->
+    <div class="col-lg-6">
+        <div class="admin-card h-100 mb-0">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title">
+                    <i class="bi bi-person-circle"></i> Thông Tin Khách Hàng & Giao Hàng
+                </h3>
+            </div>
+            <div class="admin-card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted" style="width: 140px;">Họ tên:</td>
+                        <td class="fw-bold">@Model.CustomerName</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Số điện thoại:</td>
+                        <td class="fw-semibold">@Model.CustomerPhone</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Địa chỉ nhận:</td>
+                        <td>@Model.ShippingAddress</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Thời gian đặt:</td>
+                        <td>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss") (UTC)</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial & Payment Summary -->
+    <div class="col-lg-6">
+        <div class="admin-card h-100 mb-0">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title">
+                    <i class="bi bi-credit-card-2-front"></i> Thanh Toán & Dòng Tiền
+                </h3>
+                @switch (Model.PaymentStatus)
+                {
+                    case "Paid":
+                        <span class="badge-status status-paid">Đã thanh toán</span>
+                        break;
+                    case "Pending":
+                        <span class="badge-status status-pending">Chờ thanh toán</span>
+                        break;
+                    case "Refunded":
+                        <span class="badge-status status-refunded">Đã hoàn tiền</span>
+                        break;
+                    default:
+                        <span class="badge-status status-draft">@Model.PaymentStatus</span>
+                        break;
+                }
+            </div>
+            <div class="admin-card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted" style="width: 160px;">Phương thức:</td>
+                        <td class="fw-bold">@Model.PaymentMethod</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Tạm tính sản phẩm:</td>
+                        <td class="fw-semibold">@Model.Subtotal.ToString("N0") đ</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Mã giảm giá:</td>
+                        <td class="text-success fw-bold">
+                            @(string.IsNullOrEmpty(Model.VoucherCode) ? "Không có" : $"{Model.VoucherCode} (-{Model.DiscountAmount.ToString("N0")} đ)")
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Phí vận chuyển:</td>
+                        <td>@Model.ShippingFee.ToString("N0") đ</td>
+                    </tr>
+                    <tr class="border-top">
+                        <td class="fw-bold text-dark fs-6 pt-2">Tổng tiền (VAT = 0%):</td>
+                        <td class="fw-extrabold text-danger fs-5 pt-2">@Model.TotalAmount.ToString("N0") đ</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Items List -->
+<div class="admin-card mb-4">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title">
+            <i class="bi bi-box"></i> Danh Sách Mặt Hàng Đã Mua
+        </h3>
+    </div>
+    <div class="admin-card-body p-0">
+        <div class="table-responsive">
+            <table class="table admin-table mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Sản phẩm</th>
+                        <th>Size / Màu</th>
+                        <th class="text-end">Giá bán</th>
+                        <th class="text-end">Giá vốn (COGS)</th>
+                        <th class="text-center">Số lượng</th>
+                        <th class="text-end">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int idx = 1; }
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@(idx++)</td>
+                            <td class="fw-bold text-dark">@item.ProductName</td>
+                            <td>
+                                <span class="badge bg-dark me-1">Size @item.Size</span>
+                                <span class="text-muted">@item.Color</span>
+                            </td>
+                            <td class="text-end">@item.UnitPrice.ToString("N0") đ</td>
+                            <td class="text-end text-muted">@item.UnitCost.ToString("N0") đ</td>
+                            <td class="text-center fw-bold">@item.Quantity</td>
+                            <td class="text-end fw-extrabold text-danger">@item.TotalPrice.ToString("N0") đ</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Cash Flow & Return Entries -->
+@if (Model.Returns.Count > 0 || Model.CashFlowEntries.Count > 0)
+{
+    <div class="row g-4">
+        @if (Model.Returns.Count > 0)
+        {
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h3 class="admin-card-title text-primary">
+                            <i class="bi bi-arrow-repeat"></i> Lịch Sử Đổi Trả (RMA)
+                        </h3>
+                    </div>
+                    <div class="admin-card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            @foreach (var ret in Model.Returns)
+                            {
+                                <li class="list-group-item p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold text-dark">@ret.ReturnCode</span>
+                                        <span class="badge bg-primary">@ret.ReturnType</span>
+                                    </div>
+                                    <div class="small text-muted mb-1">Lý do: @ret.Reason</div>
+                                    <div class="small text-danger fw-bold">
+                                        Số tiền hoàn: @ret.RefundAmount.ToString("N0") đ &bull; Trạng thái: @ret.Status
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Model.CashFlowEntries.Count > 0)
+        {
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h3 class="admin-card-title text-success">
+                            <i class="bi bi-receipt"></i> Phiếu Thu / Chi Sổ Quỹ
+                        </h3>
+                    </div>
+                    <div class="admin-card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            @foreach (var cf in Model.CashFlowEntries)
+                            {
+                                <li class="list-group-item p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold">@cf.VoucherCode</span>
+                                        <span class="badge @(cf.VoucherType == "RECEIPT" ? "bg-success" : "bg-danger")">
+                                            @(cf.VoucherType == "RECEIPT" ? "PHIẾU THU" : "PHIẾU CHI")
+                                        </span>
+                                    </div>
+                                    <div class="small text-muted">@cf.Note</div>
+                                    <div class="small fw-bold @(cf.VoucherType == "RECEIPT" ? "text-success" : "text-danger")">
+                                        Số tiền: @cf.Amount.ToString("N0") đ (@cf.PaymentMethod)
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

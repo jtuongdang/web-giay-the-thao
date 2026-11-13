@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Quản Trị Hệ Thống | SNEAKERZONE</title>
+
+    <!-- Bootstrap 5 & Icons -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Admin CSS -->
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="admin-body">
+    <div class="admin-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <a asp-controller="Admin" asp-action="Index" class="sidebar-brand">
+                    <span class="fs-4">⚡</span>
+                    <span>SNEAKER<span class="text-danger">ZONE</span></span>
+                    <span class="brand-badge ms-auto">ADMIN</span>
+                </a>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li class="sidebar-heading">Báo cáo & Phân tích</li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Index" class="sidebar-link @(ViewData["ActiveMenu"] as string == "Dashboard" ? "active" : "")">
+                        <span class="link-content">
+                            <i class="bi bi-grid-1x2-fill"></i>
+                            <span>Dashboard Tổng quan</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Admin" asp-action="CashFlow" class="sidebar-link @(ViewData["ActiveMenu"] as string == "CashFlow" ? "active" : "")">
+                        <span class="link-content">
+                            <i class="bi bi-wallet2"></i>
+                            <span>Sổ quỹ thực tế</span>
+                        </span>
+                    </a>
+                </li>
+
+                <li class="sidebar-heading">Bán hàng & Đổi trả</li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Orders" class="sidebar-link @(ViewData["ActiveMenu"] as string == "Orders" ? "active" : "")">
+                        <span class="link-content">
+                            <i class="bi bi-bag-check-fill"></i>
+                            <span>Quản lý Đơn hàng</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Returns" class="sidebar-link @(ViewData["ActiveMenu"] as string == "Returns" ? "active" : "")">
+                        <span class="link-content">
+                            <i class="bi bi-arrow-left-right"></i>
+                            <span>Đổi size / Hoàn tiền</span>
+                        </span>
+                    </a>
+                </li>
+
+                <li class="sidebar-heading">Kho & Chuỗi cung ứng</li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Inventory" class="sidebar-link @(ViewData["ActiveMenu"] as string == "Inventory" ? "active" : "")">
+                        <span class="link-content">
+                            <i class="bi bi-box-seam-fill"></i>
+                            <span>Tồn kho & Cảnh báo</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Admin" asp-action="PurchaseOrders" class="sidebar-link @(ViewData["ActiveMenu"] as string == "PurchaseOrders" ? "active" : "")">
+                        <span class="link-content">
+                            <i class="bi bi-truck"></i>
+                            <span>Đơn nhập hàng (PO)</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Suppliers" class="sidebar-link @(ViewData["ActiveMenu"] as string == "Suppliers" ? "active" : "")">
+                        <span class="link-content">
+                            <i class="bi bi-building-fill-gear"></i>
+                            <span>Nhà cung cấp & Nợ</span>
+                        </span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <a asp-controller="Home" asp-action="Index" class="sidebar-link text-white-50" target="_blank">
+                    <span class="link-content">
+                        <i class="bi bi-shop"></i>
+                        <span>Xem Cửa hàng (Web)</span>
+                    </span>
+                    <i class="bi bi-box-arrow-up-right fs-7"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <div class="admin-main-content">
+            <!-- Topbar Header -->
+            <header class="admin-topbar">
+                <div class="topbar-left">
+                    <div class="page-title-wrap">
+                        <h1>@ViewData["Title"]</h1>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <span class="badge bg-light text-dark border px-3 py-2 fw-semibold">
+                        <i class="bi bi-shield-lock-fill text-success me-1"></i> Quyền: Admin / Quản trị viên
+                    </span>
+
+                    <a asp-controller="Admin" asp-action="CreatePurchaseOrder" class="btn btn-admin-accent btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i> Nhập hàng mới
+                    </a>
+                </div>
+            </header>
+
+            <!-- Alerts Container -->
+            <div class="px-4 pt-3">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-0" role="alert">
+                        <i class="bi bi-check-circle-fill fs-5"></i>
+                        <div>@TempData["SuccessMessage"]</div>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-0" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <div>@TempData["ErrorMessage"]</div>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["InfoMessage"] != null)
+                {
+                    <div class="alert alert-info alert-dismissible fade show d-flex align-items-center gap-2 mb-0" role="alert">
+                        <i class="bi bi-info-circle-fill fs-5"></i>
+                        <div>@TempData["InfoMessage"]</div>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+            </div>
+
+            <!-- Page Body Inner -->
+            <main class="admin-body-inner">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,270 @@
+@model List<CashFlowLedger>
+@{
+    ViewData["Title"] = "Sổ Quỹ Thực Tế & Quản Lý Dòng Tiền (Cash Flow)";
+    var totalInflow = (decimal)(ViewBag.TotalInflow ?? 0m);
+    var totalOutflow = (decimal)(ViewBag.TotalOutflow ?? 0m);
+    var currentBalance = (decimal)(ViewBag.CurrentBalance ?? 0m);
+    var currentVoucherType = ViewBag.CurrentVoucherType as string ?? "All";
+    var currentCategory = ViewBag.CurrentCategory as string ?? "All";
+    var currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    var totalPages = (int)(ViewBag.TotalPages ?? 1);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+}
+
+<!-- Cash Flow Summary KPIs -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div>
+                    <div class="kpi-label">Tổng Thực Thu (Inflow)</div>
+                    <div class="kpi-value text-success">+@totalInflow.ToString("N0") đ</div>
+                </div>
+                <div class="kpi-icon icon-profit">
+                    <i class="bi bi-arrow-down-left-circle-fill"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">Doanh thu bán lẻ COD, thẻ & phụ thu đổi size</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div>
+                    <div class="kpi-label">Tổng Thực Chi (Outflow)</div>
+                    <div class="kpi-value text-danger">-@totalOutflow.ToString("N0") đ</div>
+                </div>
+                <div class="kpi-icon icon-cogs">
+                    <i class="bi bi-arrow-up-right-circle-fill"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">Chi trả nợ NCC, hoàn tiền khách & chi phí vận hành</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div>
+                    <div class="kpi-label">Số Dư Quỹ Thực Tế (Net Cash)</div>
+                    <div class="kpi-value @(currentBalance >= 0 ? "text-primary" : "text-danger")">
+                        @currentBalance.ToString("N0") đ
+                    </div>
+                </div>
+                <div class="kpi-icon icon-cash">
+                    <i class="bi bi-safe2-fill"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">Tổng thực thu trừ tổng thực chi tiền mặt / ngân hàng</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar & Create Manual Entry -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="btn-group" role="group">
+        <a asp-action="CashFlow" asp-route-voucherType="All" asp-route-category="@currentCategory"
+           class="btn btn-sm @(currentVoucherType == "All" ? "btn-dark fw-bold" : "btn-outline-secondary")">
+            Tất cả phiếu (@totalCount)
+        </a>
+        <a asp-action="CashFlow" asp-route-voucherType="RECEIPT" asp-route-category="@currentCategory"
+           class="btn btn-sm @(currentVoucherType == "RECEIPT" ? "btn-success fw-bold" : "btn-outline-secondary")">
+            Phiếu Thu (Receipts)
+        </a>
+        <a asp-action="CashFlow" asp-route-voucherType="PAYMENT" asp-route-category="@currentCategory"
+           class="btn btn-sm @(currentVoucherType == "PAYMENT" ? "btn-danger fw-bold" : "btn-outline-secondary")">
+            Phiếu Chi (Payments)
+        </a>
+    </div>
+
+    <button type="button" class="btn btn-admin-accent" data-bs-toggle="modal" data-bs-target="#createCashEntryModal">
+        <i class="bi bi-plus-circle me-1"></i> Lập Phiếu Thu / Chi Vận Hành
+    </button>
+</div>
+
+<!-- Cash Flow Ledger Table -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title">
+            <i class="bi bi-journal-check text-primary"></i> Nhật Ký Sổ Quỹ Thu - Chi (Cash Flow Ledger)
+        </h3>
+        <span class="text-muted small">Hiển thị @Model.Count trên tổng số @totalCount bản ghi</span>
+    </div>
+    <div class="admin-card-body p-0">
+        @if (Model.Count == 0)
+        {
+            <div class="p-5 text-center text-muted">
+                <i class="bi bi-wallet fs-1 mb-2 d-block"></i>
+                <div class="fw-bold">Chưa có phiếu thu / chi nào trong sổ quỹ.</div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Mã phiếu</th>
+                            <th>Loại phiếu</th>
+                            <th>Danh mục nghiệp vụ</th>
+                            <th class="text-end">Số tiền</th>
+                            <th>Phương thức</th>
+                            <th>Chứng từ tham chiếu</th>
+                            <th>Thời gian</th>
+                            <th>Ghi chú / Diễn giải</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var entry in Model)
+                        {
+                            var isReceipt = entry.VoucherType == "RECEIPT";
+                            <tr>
+                                <td class="fw-bold font-monospace small">@entry.VoucherCode</td>
+                                <td>
+                                    @if (isReceipt)
+                                    {
+                                        <span class="badge bg-success px-2 py-1">
+                                            <i class="bi bi-arrow-down-left"></i> PHIẾU THU
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger px-2 py-1">
+                                            <i class="bi bi-arrow-up-right"></i> PHIẾU CHI
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="fw-semibold small">
+                                        @switch (entry.Category)
+                                        {
+                                            case "SALE_REVENUE":
+                                                <span class="text-success"><i class="bi bi-bag-check"></i> Tiền bán giày (Doanh thu)</span>
+                                                break;
+                                            case "SUPPLIER_PAYMENT":
+                                                <span class="text-danger"><i class="bi bi-truck"></i> Chi trả nợ NCC</span>
+                                                break;
+                                            case "CUSTOMER_REFUND":
+                                                <span class="text-danger"><i class="bi bi-arrow-return-left"></i> Chi hoàn tiền cho khách</span>
+                                                break;
+                                            case "EXCHANGE_SURCHARGE":
+                                                <span class="text-primary"><i class="bi bi-plus-slash-minus"></i> Thu chênh lệch đổi size</span>
+                                                break;
+                                            case "EXCHANGE_REFUND":
+                                                <span class="text-warning"><i class="bi bi-dash-circle"></i> Trả tiền thừa đổi size</span>
+                                                break;
+                                            case "OPERATIONAL_COST":
+                                                <span class="text-dark"><i class="bi bi-gear"></i> Chi phí vận hành</span>
+                                                break;
+                                            default:
+                                                <span>@entry.Category</span>
+                                                break;
+                                        }
+                                    </span>
+                                </td>
+                                <td class="text-end fw-extrabold fs-6 @(isReceipt ? "text-success" : "text-danger")">
+                                    @(isReceipt ? $"+{entry.Amount:N0} đ" : $"-{entry.Amount:N0} đ")
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@entry.PaymentMethod</span>
+                                </td>
+                                <td>
+                                    @if (entry.Order != null)
+                                    {
+                                        <a asp-action="OrderDetail" asp-route-id="@entry.OrderId" class="text-decoration-none fw-semibold">
+                                            Đơn @entry.Order.OrderCode
+                                        </a>
+                                    }
+                                    else if (entry.PurchaseOrder != null)
+                                    {
+                                        <span class="fw-semibold">PO @entry.PurchaseOrder.PoCode</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">@entry.ReferenceType</span>
+                                    }
+                                </td>
+                                <td class="small text-muted">@entry.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="small text-muted" style="max-width: 250px;">@entry.Note</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1)
+    {
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+            <span class="small text-muted">Trang @currentPage / @totalPages</span>
+            <ul class="pagination pagination-sm mb-0">
+                @for (int p = 1; p <= totalPages; p++)
+                {
+                    <li class="page-item @(p == currentPage ? "active" : "")">
+                        <a class="page-link" asp-action="CashFlow" asp-route-page="@p" asp-route-voucherType="@currentVoucherType" asp-route-category="@currentCategory">@p</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+<!-- Modal: Create Manual Cash Flow Entry -->
+<div class="modal fade" id="createCashEntryModal" tabindex="-1" aria-labelledby="createCashEntryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form method="post" asp-action="CreateCashFlowEntry">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="createCashEntryModalLabel">
+                        <i class="bi bi-wallet2 me-1"></i> Lập Phiếu Thu / Chi Vận Hành Sổ Quỹ
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Loại Phiếu <span class="text-danger">*</span></label>
+                        <select name="voucherType" class="form-select" required>
+                            <option value="PAYMENT">PHIẾU CHI (Xuất tiền)</option>
+                            <option value="RECEIPT">PHIẾU THU (Nhận tiền)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Danh Mục Nghiệp Vụ <span class="text-danger">*</span></label>
+                        <select name="category" class="form-select" required>
+                            <option value="OPERATIONAL_COST">Chi phí vận hành shop (Điện, nước, mặt bằng, bao bì...)</option>
+                            <option value="OTHER_EXPENSE">Chi phí khác</option>
+                            <option value="OTHER_INCOME">Thu nhập khác</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số Tiền (VNĐ) <span class="text-danger">*</span></label>
+                        <input type="number" name="amount" class="form-control" min="1000" step="1000" placeholder="VD: 500000" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Phương Thức Thanh Toán</label>
+                        <select name="paymentMethod" class="form-select">
+                            <option value="Tiền mặt">Tiền mặt tại két</option>
+                            <option value="Chuyển khoản">Chuyển khoản ngân hàng</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ghi Chú / Diễn Giải <span class="text-danger">*</span></label>
+                        <textarea name="note" class="form-control" rows="2" placeholder="Ví dụ: Mua hộp carton đóng gói giày..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-admin-accent px-4">
+                        <i class="bi bi-check-circle me-1"></i> Lưu Phiếu Sổ Quỹ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,311 @@
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard Tổng Quan & Báo Cáo Tài Chính";
+}
+
+<!-- Top KPI Stat Cards -->
+<div class="row g-3 mb-4">
+    <!-- Doanh thu thuần -->
+    <div class="col-xl-3 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div>
+                    <div class="kpi-label">Doanh thu thuần</div>
+                    <div class="kpi-value text-primary">@Model.NetRevenue.ToString("N0") đ</div>
+                </div>
+                <div class="kpi-icon icon-revenue">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">
+                <i class="bi bi-info-circle"></i> Đơn đã hoàn tất trừ hoàn tiền (VAT = 0%)
+            </div>
+        </div>
+    </div>
+
+    <!-- Giá vốn hàng bán (COGS) -->
+    <div class="col-xl-3 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div>
+                    <div class="kpi-label">Giá vốn hàng bán (COGS)</div>
+                    <div class="kpi-value text-danger">@Model.Cogs.ToString("N0") đ</div>
+                </div>
+                <div class="kpi-icon icon-cogs">
+                    <i class="bi bi-calculator"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">
+                <i class="bi bi-check2-circle"></i> Tính theo giá vốn bình quân gia quyền
+            </div>
+        </div>
+    </div>
+
+    <!-- Lợi nhuận gộp (Gross Profit) -->
+    <div class="col-xl-3 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div>
+                    <div class="kpi-label">Lợi nhuận gộp (Gross Profit)</div>
+                    <div class="kpi-value text-success">@Model.GrossProfit.ToString("N0") đ</div>
+                </div>
+                <div class="kpi-icon icon-profit">
+                    <i class="bi bi-piggy-bank-fill"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">
+                <i class="bi bi-arrow-up-right text-success"></i> Doanh thu thuần - COGS
+            </div>
+        </div>
+    </div>
+
+    <!-- Số dư tiền mặt / Sổ quỹ thực tế -->
+    <div class="col-xl-3 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div>
+                    <div class="kpi-label">Số dư tiền mặt (Sổ quỹ)</div>
+                    <div class="kpi-value @(Model.NetCashBalance >= 0 ? "text-warning" : "text-danger")">
+                        @Model.NetCashBalance.ToString("N0") đ
+                    </div>
+                </div>
+                <div class="kpi-icon icon-cash">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">
+                <span>Thu: <strong class="text-success">@Model.TotalCashInflow.ToString("N0") đ</strong></span>
+                <span class="mx-1">&bull;</span>
+                <span>Chi: <strong class="text-danger">@Model.TotalCashOutflow.ToString("N0") đ</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary KPIs -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white rounded-3 d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <span class="text-muted small fw-bold text-uppercase">Đơn hàng chờ duyệt</span>
+                <h4 class="mb-0 fw-extrabold text-dark mt-1">@Model.PendingOrdersCount</h4>
+            </div>
+            <a asp-controller="Admin" asp-action="Orders" asp-route-status="Pending" class="btn btn-sm btn-outline-warning rounded-pill px-3">
+                Xem ngay <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white rounded-3 d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <span class="text-muted small fw-bold text-uppercase">Công nợ nhà cung cấp</span>
+                <h4 class="mb-0 fw-extrabold text-danger mt-1">@Model.TotalSupplierDebt.ToString("N0") đ</h4>
+            </div>
+            <a asp-controller="Admin" asp-action="Suppliers" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                Trả nợ NCC <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 bg-white rounded-3 d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <span class="text-muted small fw-bold text-uppercase">Biến thể sắp hết hàng</span>
+                <h4 class="mb-0 fw-extrabold text-danger mt-1">@Model.LowStockVariantsCount</h4>
+            </div>
+            <a asp-controller="Admin" asp-action="Inventory" asp-route-onlyLowStock="true" class="btn btn-sm btn-danger rounded-pill px-3 text-white">
+                <i class="bi bi-exclamation-triangle"></i> Cảnh báo kho
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Charts Row -->
+<div class="row g-4 mb-4">
+    <!-- Chart 1: Doanh thu thuần & Lợi nhuận gộp -->
+    <div class="col-xl-6">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title">
+                    <i class="bi bi-bar-chart-line-fill text-primary"></i> Biểu đồ Doanh thu thuần & Lợi nhuận gộp
+                </h3>
+                <span class="badge bg-light text-muted border">14 ngày gần nhất</span>
+            </div>
+            <div class="admin-card-body">
+                <div class="chart-container">
+                    <canvas id="revenueProfitChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 2: Dòng tiền thực tế (Thu vs Chi) -->
+    <div class="col-xl-6">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title">
+                    <i class="bi bi-cash-coin text-warning"></i> Biểu đồ Dòng tiền thực tế (Sổ quỹ Thu - Chi)
+                </h3>
+                <span class="badge bg-light text-muted border">14 ngày gần nhất</span>
+            </div>
+            <div class="admin-card-body">
+                <div class="chart-container">
+                    <canvas id="cashFlowChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Stock Alert & Recent Orders Row -->
+<div class="row g-4">
+    <!-- Low Stock Alert Table -->
+    <div class="col-xl-7">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title text-danger">
+                    <i class="bi bi-exclamation-diamond-fill"></i> Cảnh Báo Tồn Kho Sắp Hết (Low Stock Alert)
+                </h3>
+                <a asp-controller="Admin" asp-action="Inventory" asp-route-onlyLowStock="true" class="btn btn-sm btn-admin-outline">
+                    Xem tất cả (@Model.LowStockVariantsCount)
+                </a>
+            </div>
+            <div class="admin-card-body p-0">
+                @if (Model.LowStockAlerts.Count == 0)
+                {
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-check-circle-fill fs-2 text-success mb-2 d-block"></i>
+                        <span>Tất cả các biến thể giày đều đang có mức tồn an toàn trên ngưỡng cảnh báo.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table admin-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Sản phẩm / Size</th>
+                                    <th class="text-center">Tồn kho</th>
+                                    <th class="text-center">Khả dụng</th>
+                                    <th class="text-center">Ngưỡng</th>
+                                    <th class="text-end">Giá vốn</th>
+                                    <th class="text-center">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.LowStockAlerts)
+                                {
+                                    <tr class="@(item.StockQuantity == 0 ? "row-out-of-stock" : "row-low-stock")">
+                                        <td>
+                                            <div class="fw-bold text-dark">@item.ProductName</div>
+                                            <small class="text-muted">
+                                                <span class="badge bg-dark me-1">Size @item.Size</span>
+                                                <span class="me-1">Màu: @item.Color</span> &bull; SKU: @item.Sku
+                                            </small>
+                                        </td>
+                                        <td class="text-center fw-extrabold @(item.StockQuantity == 0 ? "text-danger" : "text-warning")">
+                                            @item.StockQuantity
+                                        </td>
+                                        <td class="text-center fw-bold">
+                                            @item.AvailableQuantity
+                                        </td>
+                                        <td class="text-center text-muted">
+                                            @item.MinStockAlert
+                                        </td>
+                                        <td class="text-end">
+                                            @item.CostPrice.ToString("N0") đ
+                                        </td>
+                                        <td class="text-center">
+                                            <a asp-controller="Admin" asp-action="CreatePurchaseOrder" asp-route-preselectVariantId="@item.VariantId" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-plus-circle"></i> Nhập kho
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="col-xl-5">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title">
+                    <i class="bi bi-bag-check-fill text-dark"></i> Đơn Hàng Mới Nhất
+                </h3>
+                <a asp-controller="Admin" asp-action="Orders" class="btn btn-sm btn-admin-outline">
+                    Xem tất cả
+                </a>
+            </div>
+            <div class="admin-card-body p-0">
+                @if (Model.RecentOrders.Count == 0)
+                {
+                    <div class="p-4 text-center text-muted">
+                        Chưa có đơn hàng nào được ghi nhận.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table admin-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Mã đơn</th>
+                                    <th>Khách hàng</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var order in Model.RecentOrders)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-controller="Admin" asp-action="OrderDetail" asp-route-id="@order.Id" class="fw-bold text-decoration-none text-dark">
+                                                @order.OrderCode
+                                            </a>
+                                            <div class="small text-muted">@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">@order.CustomerName</div>
+                                            <div class="small text-muted">@order.CustomerPhone</div>
+                                        </td>
+                                        <td class="fw-bold text-danger">
+                                            @order.TotalAmount.ToString("N0") đ
+                                        </td>
+                                        <td>
+                                            @switch (order.OrderStatus)
+                                            {
+                                                case "Pending":
+                                                    <span class="badge-status status-pending">Chờ duyệt</span>
+                                                    break;
+                                                case "Confirmed":
+                                                    <span class="badge-status status-confirmed">Đã duyệt</span>
+                                                    break;
+                                                case "Shipping":
+                                                    <span class="badge-status status-shipping">Đang giao</span>
+                                                    break;
+                                                case "Completed":
+                                                    <span class="badge-status status-completed">Hoàn tất</span>
+                                                    break;
+                                                case "Cancelled":
+                                                    <span class="badge-status status-cancelled">Đã hủy</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge-status status-draft">@order.OrderStatus</span>
+                                                    break;
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

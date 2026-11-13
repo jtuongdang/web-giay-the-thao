@@ -1,0 +1,208 @@
+@model List<PurchaseOrder>
+@{
+    ViewData["Title"] = "Quản Lý Đơn Nhập Hàng (Purchase Orders)";
+    var currentStatus = ViewBag.CurrentStatus as string ?? "All";
+    var searchQuery = ViewBag.SearchQuery as string ?? "";
+    var currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    var totalPages = (int)(ViewBag.TotalPages ?? 1);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+}
+
+<!-- Top Header & Actions -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <p class="text-muted mb-0 small">
+            Quản lý quy trình nhập giày từ Nhà Cung Cấp, kiểm kho và tự động tính Giá Vốn Bình Quân Gia Quyền (Weighted Average Cost).
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Suppliers" class="btn btn-outline-dark">
+            <i class="bi bi-building me-1"></i> Danh bạ NCC & Công nợ
+        </a>
+        <a asp-action="CreatePurchaseOrder" class="btn btn-admin-accent">
+            <i class="bi bi-plus-circle me-1"></i> Tạo Đơn Nhập Hàng (PO)
+        </a>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg-8">
+                <div class="btn-group" role="group">
+                    <a asp-action="PurchaseOrders" asp-route-status="All" asp-route-search="@searchQuery"
+                       class="btn btn-sm @(currentStatus == "All" ? "btn-dark fw-bold" : "btn-outline-secondary")">
+                        Tất cả (@totalCount)
+                    </a>
+                    <a asp-action="PurchaseOrders" asp-route-status="Draft" asp-route-search="@searchQuery"
+                       class="btn btn-sm @(currentStatus == "Draft" ? "btn-warning text-dark fw-bold" : "btn-outline-secondary")">
+                        Đang chờ nhập kho (Draft)
+                    </a>
+                    <a asp-action="PurchaseOrders" asp-route-status="Received" asp-route-search="@searchQuery"
+                       class="btn btn-sm @(currentStatus == "Received" ? "btn-success fw-bold" : "btn-outline-secondary")">
+                        Đã nhập kho (Received)
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <form method="get" asp-action="PurchaseOrders" class="d-flex gap-2">
+                    <input type="hidden" name="status" value="@currentStatus" />
+                    <input type="search" name="search" class="form-control form-control-sm" placeholder="Tìm theo mã PO, NCC..." value="@searchQuery" />
+                    <button type="submit" class="btn btn-sm btn-dark">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Orders Table -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title">
+            <i class="bi bi-truck text-dark"></i> Danh Sách Phiếu Nhập Hàng
+        </h3>
+        <span class="text-muted small">Hiển thị @Model.Count trên tổng số @totalCount đơn PO</span>
+    </div>
+    <div class="admin-card-body p-0">
+        @if (Model.Count == 0)
+        {
+            <div class="p-5 text-center text-muted">
+                <i class="bi bi-box-seam fs-1 mb-2 d-block"></i>
+                <div class="fw-bold">Chưa có đơn nhập hàng nào.</div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Mã PO</th>
+                            <th>Nhà cung cấp</th>
+                            <th>Mặt hàng nhập</th>
+                            <th class="text-end">Tổng tiền PO</th>
+                            <th class="text-end">Đã thanh toán</th>
+                            <th>Thanh toán nợ</th>
+                            <th>Trạng thái kho</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var po in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark">@po.PoCode</div>
+                                    <div class="small text-muted">@po.OrderDate.ToString("dd/MM/yyyy HH:mm")</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">@po.Supplier.Name</div>
+                                    <div class="small text-muted">Mã: @po.Supplier.Code</div>
+                                </td>
+                                <td>
+                                    <div class="small">
+                                        @foreach (var item in po.Items.Take(2))
+                                        {
+                                            <div>
+                                                &bull; <strong>@item.ProductVariant.Product.Name</strong> (Sz @item.ProductVariant.Size) x@item.Quantity
+                                                <span class="text-muted">(@item.UnitCost.ToString("N0") đ/đôi)</span>
+                                            </div>
+                                        }
+                                        @if (po.Items.Count > 2)
+                                        {
+                                            <span class="text-muted">+@(po.Items.Count - 2) mặt hàng khác</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="text-end fw-extrabold text-danger">
+                                    @po.TotalAmount.ToString("N0") đ
+                                </td>
+                                <td class="text-end fw-bold text-success">
+                                    @po.PaidAmount.ToString("N0") đ
+                                    @if (po.TotalAmount > po.PaidAmount)
+                                    {
+                                        <div class="small text-danger">
+                                            Còn nợ: @((po.TotalAmount - po.PaidAmount).ToString("N0")) đ
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    @switch (po.PaymentStatus)
+                                    {
+                                        case "Paid":
+                                            <span class="badge-status status-paid">Đã trả hết</span>
+                                            break;
+                                        case "Partial":
+                                            <span class="badge-status status-partial">Trả một phần</span>
+                                            break;
+                                        case "Unpaid":
+                                            <span class="badge-status status-unpaid">Chưa thanh toán</span>
+                                            break;
+                                        default:
+                                            <span class="badge-status status-draft">@po.PaymentStatus</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    @if (po.Status == "Received")
+                                    {
+                                        <span class="badge-status status-received">
+                                            <i class="bi bi-check-circle-fill"></i> Đã nhập kho
+                                        </span>
+                                        <div class="small text-muted">
+                                            @(po.ReceivedDate?.ToString("dd/MM/yyyy") ?? "")
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-status status-draft">
+                                            <i class="bi bi-clock"></i> Chờ nhập kho
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (po.Status != "Received")
+                                    {
+                                        <form method="post" asp-action="ReceivePurchaseOrder" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="poId" value="@po.Id" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Xác nhận đã nhận đủ hàng và nhập kho cho đơn @po.PoCode?');">
+                                                <i class="bi bi-box-arrow-in-down me-1"></i> Xác nhận nhập kho
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">
+                                            <i class="bi bi-check2-all text-success"></i> Hoàn tất
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1)
+    {
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+            <span class="small text-muted">Trang @currentPage / @totalPages</span>
+            <ul class="pagination pagination-sm mb-0">
+                @for (int p = 1; p <= totalPages; p++)
+                {
+                    <li class="page-item @(p == currentPage ? "active" : "")">
+                        <a class="page-link" asp-action="PurchaseOrders" asp-route-page="@p" asp-route-status="@currentStatus" asp-route-search="@searchQuery">@p</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>
