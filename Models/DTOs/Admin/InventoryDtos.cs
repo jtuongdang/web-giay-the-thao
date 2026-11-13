@@ -98,6 +98,13 @@ public sealed record CreatePurchaseOrderRequest
     public string? Note { get; init; }
 }
 
+/// <summary>Amounts paid to the supplier when the purchase order is received.</summary>
+public sealed record ReceivePurchaseOrderRequest
+{
+    /// <summary>Optional amount paid at receiving time.</summary>
+    public decimal PaidAmount { get; init; }
+}
+
 /// <summary>A variant, quantity, and cost for a purchase order line.</summary>
 public sealed record CreatePurchaseOrderItemRequest
 {
