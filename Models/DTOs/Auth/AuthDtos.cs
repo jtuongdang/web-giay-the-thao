@@ -1,12 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace QuanLyBanGiay.Models.DTOs;
 
 /// <summary>Credentials used to sign in with a username or email address.</summary>
 public sealed record LoginRequest
 {
     /// <summary>Account username or email address.</summary>
+    [Required, StringLength(256)]
     public string UsernameOrEmail { get; init; } = string.Empty;
 
     /// <summary>Account password.</summary>
+    [Required, StringLength(128)]
     public string Password { get; init; } = string.Empty;
 }
 
@@ -14,18 +18,24 @@ public sealed record LoginRequest
 public sealed record RegisterRequest
 {
     /// <summary>Customer's full name.</summary>
+    [Required, StringLength(200)]
     public string FullName { get; init; } = string.Empty;
 
     /// <summary>Account username.</summary>
+    [Required, StringLength(100, MinimumLength = 3)]
+    [RegularExpression("^[A-Za-z0-9_.-]+$")]
     public string Username { get; init; } = string.Empty;
 
     /// <summary>Customer's email address.</summary>
+    [Required, EmailAddress, StringLength(256)]
     public string Email { get; init; } = string.Empty;
 
     /// <summary>Customer's phone number.</summary>
+    [StringLength(30)]
     public string PhoneNumber { get; init; } = string.Empty;
 
     /// <summary>Password for the new account.</summary>
+    [Required, StringLength(128, MinimumLength = 8)]
     public string Password { get; init; } = string.Empty;
 }
 
