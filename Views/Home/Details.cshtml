@@ -2,6 +2,8 @@
 @{
     ViewData["Title"] = Model.Name + " - Chi tiết sản phẩm";
     var related = ViewBag.RelatedShoes as List<QuanLyBanGiay.Models.ShoeItem> ?? new List<QuanLyBanGiay.Models.ShoeItem>();
+    var variants = ViewBag.Variants as List<QuanLyBanGiay.Controllers.ProductVariantOption> ?? new List<QuanLyBanGiay.Controllers.ProductVariantOption>();
+    var colors = variants.Select(v => v.Color).Distinct().ToList();
 }
 
 <div class="container py-4">
@@ -71,8 +73,15 @@
                 </div>
 
                 <form id="addToCartForm" method="post" asp-controller="Cart" asp-action="AddToCart"
-                      data-ajax-url="@Url.Action("AddAjax", "Cart")">
+                      data-ajax-url="@Url.Action("AddAjax", "Cart")" data-variants="@System.Text.Json.JsonSerializer.Serialize(variants, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web))">
                     <input type="hidden" name="shoeId" value="@Model.Id" />
+                    <input type="hidden" id="selectedVariantId" name="variantId" value="" />
+                    <div class="mb-3">
+                        <label for="colorSelector" class="fw-bold text-dark mb-2">Chọn màu sắc:</label>
+                        <select id="colorSelector" name="color" class="form-select">
+                            @foreach (var color in colors) { <option value="@color">@color</option> }
+                        </select>
+                    </div>
 
                     <!-- Size Picker -->
                     <div class="mb-4">
@@ -83,13 +92,14 @@
                             </a>
                         </div>
                         <div class="d-flex flex-wrap gap-2" id="sizeSelector">
-                            @for (int i = 0; i < Model.AvailableSizes.Count; i++)
+                            @foreach (var size in variants.Select(v => v.Size).Distinct().OrderBy(s => s))
                             {
-                                var size = Model.AvailableSizes[i];
-                                <input type="radio" class="btn-check" name="size" id="size_@size" value="@size" @(i == 0 ? "checked" : "") required>
-                                <label class="btn btn-outline-dark px-3 py-2 fw-bold" for="size_@size">@size</label>
+                                var available = variants.Where(v => v.Size == size).Sum(v => v.AvailableQuantity);
+                                <input type="radio" class="btn-check" name="size" id="size_@size" value="@size" required disabled="@(available == 0)">
+                                <label class="btn btn-outline-dark px-3 py-2 fw-bold @(available == 0 ? "disabled text-muted" : "")" for="size_@size">@size <small class="d-block">@available còn</small></label>
                             }
                         </div>
+                        <small id="stockMessage" class="text-muted d-block mt-2" aria-live="polite"></small>
                     </div>
 
                     <!-- Quantity -->
@@ -97,7 +107,7 @@
                         <label class="fw-bold text-dark mb-2">Số lượng:</label>
                         <div class="input-group" style="width: 140px;">
                             <button class="btn btn-outline-secondary" type="button" onclick="const q=document.getElementById('quantity'); if(q.value>1) q.value--;">-</button>
-                            <input type="number" id="quantity" name="quantity" class="form-control text-center fw-bold" value="1" min="1" max="10">
+                            <input type="number" id="quantity" name="quantity" class="form-control text-center fw-bold" value="1" min="1" max="99">
                             <button class="btn btn-outline-secondary" type="button" onclick="const q=document.getElementById('quantity'); q.value++;">+</button>
                         </div>
                     </div>

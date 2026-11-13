@@ -25,13 +25,23 @@
             </div>
             <div class="d-flex justify-content-between mb-2">
                 <span class="text-muted small">Hình thức thanh toán:</span>
-                <span class="badge bg-dark">@Model.PaymentMethod</span>
+                <span class="badge bg-dark">@(Model.PaymentMethod == "QR_TRANSFER" ? "QR Mock" : Model.PaymentMethod)</span>
             </div>
             <div class="d-flex justify-content-between pt-2 border-top">
                 <span class="fw-bold">Tổng thanh toán:</span>
                 <span class="fw-extrabold fs-5 text-accent">@string.Format("{0:N0} ₫", Model.TotalAmount)</span>
             </div>
         </div>
+
+        @if (Model.PaymentMethod == "QR_TRANSFER")
+        {
+            <div class="alert alert-info text-start">
+                <strong class="d-block mb-2">Thanh toán QR mô phỏng</strong>
+                <span>Đơn hàng đang chờ thanh toán. Đây là thông tin minh họa; chưa có giao dịch ngân hàng thật.</span>
+                <div class="mt-2"><strong>Nội dung:</strong> SNEAKERZONE @Model.CustomerName</div>
+                <div><strong>Số tiền:</strong> @string.Format("{0:N0} ₫", Model.TotalAmount)</div>
+            </div>
+        }
 
         <p class="small text-muted mb-4">
             <i class="bi bi-clock-history me-1"></i> Dự kiến đơn hàng sẽ được giao đến bạn trong vòng <strong>2 - 3 ngày làm việc</strong>. Nhân viên chăm sóc khách hàng sẽ gọi điện xác nhận trước khi giao hàng.
