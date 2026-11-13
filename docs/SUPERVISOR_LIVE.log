@@ -1,0 +1,247 @@
+[2026-11-13 10:45:44] === KHỞI ĐỘNG TIẾN TRÌNH SUPERVISOR GIÁM SÁT DỰ ÁN THỜI GIAN THỰC ===
+[2026-11-13 10:45:44] Phát hiện TASK-03: Bộ máy Đặt hàng, Khóa tồn  đã hoàn thành và qua kiểm thử! Đang tự động nghiệm thu...
+[2026-11-13 10:45:44] Đã nghiệm thu cục bộ task TASK-03: Bộ máy Đặt hàng, Khóa tồn .
+[2026-11-13 10:45:44] Merging branch orchestrator/task-03-bo-may-at-hang-khoa-ton-kho-concurrency-oi-t into main in /Users/jtuong/Documents/quanlybangiay...
+[2026-11-13 10:45:44] Merged orchestrator/task-03-bo-may-at-hang-khoa-ton-kho-concurrency-oi-t successfully.
+[2026-11-13 10:45:44] Tiến độ: Hoàn thành 0/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:45:49] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:45:54] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:45:59] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:04] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:09] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:14] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:19] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:24] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:29] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:34] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:39] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:44] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:49] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:54] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:46:59] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:47:04] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:47:09] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:47:14] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:47:20] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:47:25] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:47:30] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:47:35] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:47:40] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:47:45] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:47:50] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:47:55] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:48:00] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 3 | Hàng đợi: 2
+[2026-11-13 10:48:05] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 2 | Hàng đợi: 2
+[2026-11-13 10:48:10] Phát hiện TASK-02: Bộ máy Quản lý Kho, Nhập h đã hoàn thành và qua kiểm thử! Đang tự động nghiệm thu...
+[2026-11-13 10:48:10] Đã nghiệm thu cục bộ task TASK-02: Bộ máy Quản lý Kho, Nhập h.
+[2026-11-13 10:48:10] Merging branch orchestrator/task-02-bo-may-quan-ly-kho-nhap-hang-po-cong-no-nha into main in /Users/jtuong/Documents/quanlybangiay...
+[2026-11-13 10:48:10] Merged orchestrator/task-02-bo-may-quan-ly-kho-nhap-hang-po-cong-no-nha successfully.
+[2026-11-13 10:48:10] Tiến độ: Hoàn thành 1/6 tasks | Đang chạy: 2 | Hàng đợi: 2
+[2026-11-13 10:48:15] Tiến độ: Hoàn thành 2/6 tasks | Đang chạy: 2 | Hàng đợi: 2
+[2026-11-13 10:48:20] Tiến độ: Hoàn thành 2/6 tasks | Đang chạy: 2 | Hàng đợi: 2
+[2026-11-13 10:48:25] Tiến độ: Hoàn thành 2/6 tasks | Đang chạy: 2 | Hàng đợi: 2
+[2026-11-13 10:48:30] Tiến độ: Hoàn thành 2/6 tasks | Đang chạy: 2 | Hàng đợi: 2
+[2026-11-13 10:48:35] Tiến độ: Hoàn thành 2/6 tasks | Đang chạy: 1 | Hàng đợi: 2
+[2026-11-13 10:48:40] Phát hiện TASK-01: Xây dựng Auth & RBAC Servi đã hoàn thành và qua kiểm thử! Đang tự động nghiệm thu...
+[2026-11-13 10:48:40] Đã nghiệm thu cục bộ task TASK-01: Xây dựng Auth & RBAC Servi.
+[2026-11-13 10:48:40] Merging branch orchestrator/task-01-xay-dung-auth-rbac-service-jwt-cookie-phan-q into main in /Users/jtuong/Documents/quanlybangiay...
+[2026-11-13 10:48:40] Merged orchestrator/task-01-xay-dung-auth-rbac-service-jwt-cookie-phan-q successfully.
+[2026-11-13 10:48:40] Tiến độ: Hoàn thành 2/6 tasks | Đang chạy: 1 | Hàng đợi: 2
+[2026-11-13 10:48:45] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:48:50] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:48:55] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:00] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:05] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:10] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:15] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:20] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:25] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:30] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:35] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:40] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:45] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:50] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:49:55] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:00] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:05] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:10] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:15] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:20] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:25] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:30] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:35] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:40] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:45] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:50] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:50:55] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:01] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:06] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:11] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:16] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:21] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:26] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:31] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:36] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:41] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:46] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:51] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:51:56] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:01] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:06] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:11] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:16] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:21] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:26] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:31] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:36] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:41] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:46] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:51] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:52:56] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:01] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:06] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:11] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:16] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:21] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:26] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:31] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:36] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:41] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:46] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:51] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:53:56] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:01] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:06] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:11] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:16] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:21] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:26] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:31] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:36] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:41] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:46] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:51] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:54:56] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:55:01] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:55:06] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:55:11] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:55:16] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:55:21] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 2 | Hàng đợi: 1
+[2026-11-13 10:55:26] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 1 | Hàng đợi: 1
+[2026-11-13 10:55:31] Phát hiện TASK-06: Xây dựng Giao diện Quản tr đã hoàn thành và qua kiểm thử! Đang tự động nghiệm thu...
+[2026-11-13 10:55:31] Đã nghiệm thu cục bộ task TASK-06: Xây dựng Giao diện Quản tr.
+[2026-11-13 10:55:31] Merging branch orchestrator/task-06-xay-dung-giao-dien-quan-tri-cua-hang-admin-b into main in /Users/jtuong/Documents/quanlybangiay...
+[2026-11-13 10:55:32] Merged orchestrator/task-06-xay-dung-giao-dien-quan-tri-cua-hang-admin-b successfully.
+[2026-11-13 10:55:32] Tiến độ: Hoàn thành 3/6 tasks | Đang chạy: 1 | Hàng đợi: 1
+[2026-11-13 10:55:37] Tiến độ: Hoàn thành 4/6 tasks | Đang chạy: 2 | Hàng đợi: 0
+[2026-11-13 10:55:42] Tiến độ: Hoàn thành 4/6 tasks | Đang chạy: 2 | Hàng đợi: 0
+[2026-11-13 10:55:47] Tiến độ: Hoàn thành 4/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:55:52] Phát hiện TASK-04: Phát triển toàn bộ RESTful đã hoàn thành và qua kiểm thử! Đang tự động nghiệm thu...
+[2026-11-13 10:55:52] Đã nghiệm thu cục bộ task TASK-04: Phát triển toàn bộ RESTful.
+[2026-11-13 10:55:52] Merging branch orchestrator/task-04-phat-trien-toan-bo-restful-api-controllers-c into main in /Users/jtuong/Documents/quanlybangiay...
+[2026-11-13 10:55:52] Merge orchestrator/task-04-phat-trien-toan-bo-restful-api-controllers-c warning/conflict: Auto-merging Controllers/Api/AuthController.cs
+CONFLICT (add/add): Merge conflict in Controllers/Api/AuthController.cs
+Automatic merge failed; fix conflicts and then commit the result.
+. Attempting rebase/cherry-pick...
+[2026-11-13 10:55:52] Tiến độ: Hoàn thành 4/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:55:57] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:02] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:07] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:12] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:17] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:22] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:27] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:32] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:37] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:42] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:47] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:52] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:56:57] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:02] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:07] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:12] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:17] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:22] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:27] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:32] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:37] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:42] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:47] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:52] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:57:57] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:02] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:07] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:12] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:17] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:22] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:27] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:32] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:37] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:42] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:47] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:52] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:58:57] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:02] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:07] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:12] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:17] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:22] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:27] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:32] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:37] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:42] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:48] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:53] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 10:59:58] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:03] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:08] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:13] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:18] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:23] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:28] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:33] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:38] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:43] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:48] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:53] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:00:58] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:03] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:08] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:13] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:18] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:23] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:28] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:33] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:38] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:43] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:48] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:53] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:01:58] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:03] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:08] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:13] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:18] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:23] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:28] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:33] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:38] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:43] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:48] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:53] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:02:58] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:03:03] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:03:08] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:03:13] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:03:18] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:03:23] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:03:28] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:03:33] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 1 | Hàng đợi: 0
+[2026-11-13 11:03:38] Phát hiện TASK-05: Đấu nối Giao diện Khách hà đã hoàn thành và qua kiểm thử! Đang tự động nghiệm thu...
+[2026-11-13 11:03:38] Đã nghiệm thu cục bộ task TASK-05: Đấu nối Giao diện Khách hà.
+[2026-11-13 11:03:38] Merging branch orchestrator/task-05-au-noi-giao-dien-khach-hang-storefront-vao-d into main in /Users/jtuong/Documents/quanlybangiay...
+[2026-11-13 11:03:38] Merged orchestrator/task-05-au-noi-giao-dien-khach-hang-storefront-vao-d successfully.
+[2026-11-13 11:03:38] Tiến độ: Hoàn thành 5/6 tasks | Đang chạy: 0 | Hàng đợi: 0
+[2026-11-13 11:03:43] Tiến độ: Hoàn thành 6/6 tasks | Đang chạy: 0 | Hàng đợi: 0
+[2026-11-13 11:03:43] Tất cả tác vụ đã hoàn thành! Đang lập Biên bản bàn giao dự án...
+[2026-11-13 11:03:48] Đã lập xong Biên bản bàn giao tại: /Users/jtuong/Documents/quanlybangiay/docs/BIEN_BAN_BAN_GIAO_DU_AN.md
+[2026-11-13 11:03:48] === TẤT CẢ TÁC VỤ ĐÃ HOÀN TẤT THÀNH CÔNG. DỪNG TIẾN TRÌNH GIÁM SÁT. ===
