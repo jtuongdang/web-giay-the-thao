@@ -1,49 +1,58 @@
 # KẾ HOẠCH TRIỂN KHAI & PHÂN CÔNG GIAO VIỆC CHO ĐỘI THỢ AI
-## (Implementation Roadmap & AI Worker Dispatch Matrix)
+## (Implementation Roadmap & AI Worker Dispatch Matrix — SQL Server 2022)
 
 ---
 
-### 1. PHÂN CHIA CÁC GIAI ĐOẠN (PROJECT PHASES)
+### 1. HẠ TẦNG & ĐỘI HÌNH TRIỂN KHAI
+* **Cơ sở dữ liệu**: SQL Server 2022 chạy trên Docker container `musing_volhard` (`localhost,1433`), database `QuanLyBanGiayDb`.
+* **Kiến trúc code**: Modular Monolith trên `QuanLyBanGiay.csproj` (ASP.NET Core 10).
+* **Đội hình AI Workers**:
+  1. **`antigravity-cli` (Tech Lead / Architect & Reviewer)**: Chia task, tạo worktree, xử lý nghiệp vụ phức tạp (Concurrency, RMA, Admin UI), review diff, chạy `dotnet build` / `dotnet test` và merge về `main`.
+  2. **`codex-local` (Backend & Data Engineer)**: Thiết kế EF Core Entities, `AppDbContext`, Migrations, Auth/RBAC, Inventory & Finance Services.
+  3. **`github-copilot-executive` (API & Frontend Engineer)**: Xây dựng REST API Controllers, Storefront tích hợp API, hoặc bộ test tích hợp (sau khi xác nhận auth CLI).
+
+---
+
+### 2. PHÂN CHIA CÁC GIAI ĐOẠN (PROJECT PHASES)
 
 ```mermaid
 flowchart TD
-    P1["GIAI ĐOẠN 1: CSDL & ENTITY FRAMEWORK CORE<br/>- Thiết kế Entity theo Schema Contract<br/>- Seed data Giày, Size, NCC mẫu<br/>- Ràng buộc toàn vẹn & kiểm thử"]
-    
-    P2["GIAI ĐOẠN 2: LÕI NGHIỆP VỤ KHO & DÒNG TIỀN (BACKEND SERVICES)<br/>- InventoryService (Nhập/Xuất kho/Sổ cái kho)<br/>- CashFlowService (Sổ quỹ Thu/Chi/Lợi nhuận gộp)<br/>- MockPaymentService (COD/QR Giả lập)"]
-    
-    P3["GIAI ĐOẠN 3: BỘ CONTROLLER REST API ĐỘC LẬP<br/>- Storefront API (Danh mục, Xem giày, Đặt hàng)<br/>- Admin Backoffice API (Quản lý kho, Nhập hàng, Tài chính)<br/>- Swagger / OpenAPI Contract testing"]
-    
-    P4["GIAI ĐOẠN 4: GIAO DIỆN BÁN LẺ THƯƠNG MẠI (STOREFRONT)<br/>- Tích hợp gọi API không phụ thuộc backend MVC cũ<br/>- Giữ nguyên hiệu ứng bay giày mượt mà<br/>- Chặn đặt hàng khi hết size trong kho"]
-    
-    P5["GIAI ĐOẠN 5: GIAO DIỆN QUẢN TRỊ KHO & DÒNG TIỀN (ADMIN PORTAL)<br/>- Màn hình Nhập hàng & Phiếu nhập<br/>- Màn hình Quản lý kho & Cảnh báo sắp hết hàng<br/>- Dashboard Tài chính: Biểu đồ Dòng tiền & Lãi lỗ"]
-    
-    P6["GIAI ĐOẠN 6: KIỂM THỬ TỔNG THỂ & BÀN GIAO VẬN HÀNH<br/>- Kiểm thử kịch bản: Nhập 100 đôi -> Bán 10 đôi -> Kiểm tra Dòng tiền<br/>- Đóng gói kịch bản triển khai & Bàn giao khách hàng"]
+    P1["GIAI ĐOẠN 1: SQL SERVER, EF CORE & AUTH/RBAC<br/>- Kết nối SQL Server (musing_volhard / QuanLyBanGiayDb)<br/>- Entities đầy đủ (Users, Products, Variants, Vouchers, PO, Orders, Returns, Ledgers)<br/>- Migrations + Seed Data + Auth JWT/Cookie"]
+
+    P2["GIAI ĐOẠN 2: LÕI NGHIỆP VỤ KHO, ĐƠN HÀNG & DÒNG TIỀN<br/>- InventoryService (Nhập kho, Giá vốn bình quân, Sổ cái kho)<br/>- OrderService (Stock Reservation + RowVersion + State Machine)<br/>- RmaService (Đổi size / Hoàn tiền) & CashFlowService (Sổ quỹ / Công nợ NCC)"]
+
+    P3["GIAI ĐOẠN 3: BỘ REST API & SWAGGER/OPENAPI<br/>- Auth, Storefront & Voucher APIs<br/>- Admin APIs (Inventory, PO, Suppliers, Orders, Returns, Finance)<br/>- Bảo vệ bằng [Authorize(Roles = 'Admin,Staff')]"]
+
+    P4["GIAI ĐOẠN 4: NÂNG CẤP STOREFRONT THƯƠNG MẠI<br/>- Chuyển Home/Cart từ dữ liệu tĩnh sang EF Core / REST API<br/>- Hiển thị tồn kho khả dụng theo Size/Màu, áp Voucher động<br/>- Màn hình Thanh toán COD / QR Mock"]
+
+    P5["GIAI ĐOẠN 5: ADMIN BACKOFFICE PORTAL<br/>- Đăng nhập Admin, Dashboard Dòng tiền & Lãi gộp (Chart.js)<br/>- Quản lý Kho, Nhập hàng, Công nợ NCC, Xử lý Đơn & Đổi/Trả"]
+
+    P6["GIAI ĐOẠN 6: KIỂM THỬ TỔNG THỂ & BÀN GIAO<br/>- Test kịch bản E2E: Nhập 100 đôi -> Giữ chỗ/Bán -> Đổi size -> Hoàn tiền -> Kiểm tra Sổ quỹ<br/>- Kiểm tra Concurrency chống bán âm kho & push GitHub"]
 
     P1 --> P2 --> P3 --> P4 --> P5 --> P6
 ```
 
 ---
 
-### 2. MA TRẬN PHÂN CÔNG TÁC VỤ CHO CÁC THỢ AI (DISPATCH MATRIX)
+### 3. MA TRẬN PHÂN CÔNG TÁC VỤ CHO CÁC THỢ AI (DISPATCH MATRIX)
 
-Với vai trò **Tech Lead**, em sẽ điều hành và giao từng task có phạm vi file (file_globs) rõ ràng vào hệ thống DevAgent Orchestrator:
+Mỗi task chạy trên git worktree riêng với phạm vi file (`file_globs`) tách biệt để tránh xung đột khi merge:
 
-| STT | Tên Task & Mục tiêu | Thợ AI phụ trách | Phạm vi file (File Globs) | Tiêu chí nghiệm thu (Acceptance Criteria) |
+| STT | Tên Task & Mục tiêu | Thợ AI phụ trách | Phạm vi file (`File Globs`) | Tiêu chí nghiệm thu (Acceptance Criteria) |
 | :--- | :--- | :--- | :--- | :--- |
-| **T1** | **Xây dựng Data Layer & EF Core Models** | `github-copilot-executive` | `Data/**/*`, `Models/**/*` | Đầy đủ Entities: `ProductVariant`, `Supplier`, `PurchaseOrder`, `InventoryTransaction`, `CashFlowLedger`. Chạy `dotnet ef` hoặc khởi tạo in-memory/sqlite thành công. |
-| **T2** | **Cơ chế Nghiệp vụ Kho & Tính Giá Vốn (Inventory Engine)** | `antigravity-cli` | `Services/Inventory/**/*` | Có logic nhập kho tự tăng tồn, xuất kho tự giảm tồn, ghi sổ `InventoryTransactions`, cập nhật giá vốn bình quân. Unit test logic kho pass 100%. |
-| **T3** | **Cơ chế Sổ Quỹ & Dòng Tiền (Cash Flow Engine)** | `github-copilot-executive` | `Services/Finance/**/*` | Tính chuẩn: Doanh thu thuần, COGS, Lợi nhuận gộp, Tiền thực thu, Tiền thực chi, Net Cash Flow. Bỏ hoàn toàn thuế. |
-| **T4** | **Mock Payment Engine (Thanh toán mô phỏng)** | `antigravity-cli` | `Services/Payment/**/*` | Xử lý COD, sinh mã QR VietQR giả lập, có API bấm "Mô phỏng chuyển khoản thành công" đổi trạng thái trong 3s. |
-| **T5** | **Bộ REST API Controllers** | `github-copilot-executive` | `Controllers/Api/**/*` | Triển khai các Endpoint độc lập theo đúng tài liệu `04_API_CONTRACT_SPECIFICATION.md`. Trả về JSON envelope chuẩn. |
-| **T6** | **Giao diện Admin Dashboard & Báo cáo Dòng tiền** | `antigravity-cli` | `Views/Admin/**/*`, `wwwroot/**/*` | Hiển thị bảng tồn kho, tạo phiếu nhập hàng, biểu đồ Thu/Chi trực quan. |
+| **T1** | **EF Core Entities, `AppDbContext`, SQL Server Migration & Seed** | `codex-local` | `Models/Entities/**/*`, `Data/**/*`, `QuanLyBanGiay.csproj`, `Program.cs` | Đầy đủ 13 bảng theo `02_DATABASE_SCHEMA_CONTRACT.md` (có `Users`, `Vouchers`, `OrderReturns`, `SupplierPayments`, `RowVersion`, `CHECK` constraints). `dotnet ef database update` lên `musing_volhard` thành công + seed data chạy sạch. |
+| **T2** | **Auth Service & JWT/Cookie RBAC** | `codex-local` | `Services/Auth/**/*`, `Models/DTOs/Auth/**/*`, `Controllers/Api/AuthController.cs` | Đăng nhập, đăng ký Customer, sinh JWT, băm mật khẩu an toàn, phân quyền `Admin`/`Staff`/`Customer`. |
+| **T3** | **Inventory, PO & Supplier Debt Engine** | `codex-local` | `Services/Inventory/**/*`, `Services/Finance/**/*` | Nhập kho tăng tồn + tính giá vốn bình quân + ghi `InventoryTransactions` + cộng công nợ NCC; trả nợ NCC; tính đúng Doanh thu, COGS, Lãi gộp, Net Cash Flow (`VAT = 0`). |
+| **T4** | **Order Reservation, State Machine, RMA & Mock Payment** | `antigravity-cli` | `Services/Orders/**/*`, `Services/Returns/**/*`, `Services/Payment/**/*` | Giữ chỗ `reserved_quantity` chống overselling bằng transaction/concurrency, chuyển trạng thái hợp lệ, đổi size/hoàn tiền cập nhật đúng kho & sổ quỹ, mô phỏng COD/QR/Card. |
+| **T5** | **Bộ REST API Controllers & Validation** | `github-copilot-executive` *(hoặc `codex-local`)* | `Controllers/Api/**/*`, `Models/DTOs/**/*` | Triển khai đầy đủ Endpoints theo `04_API_CONTRACT_SPECIFICATION.md`, trả về `ApiResponse<T>` chuẩn, khóa `[Authorize]` cho toàn bộ `/api/v1/admin/*` và `mock-simulate`. |
+| **T6** | **Chuyển Storefront (Home/Cart) sang DB/API thật** | `github-copilot-executive` | `Controllers/HomeController.cs`, `Controllers/CartController.cs`, `Views/Home/**/*`, `Views/Cart/**/*`, `wwwroot/js/**/*` | Bỏ phụ thuộc `ShoeDataService` / `CartService` in-memory; kiểm tra tồn khả dụng theo Size/Màu, áp Voucher động từ DB, giữ nguyên hiệu ứng bay giỏ hàng. |
+| **T7** | **Admin Backoffice Portal & Financial Charts** | `antigravity-cli` | `Controllers/AdminController.cs`, `Views/Admin/**/*`, `wwwroot/css/admin*`, `wwwroot/js/admin*` | Giao diện Admin: Nhập kho, Trả nợ NCC, Duyệt đơn & Đổi trả, Dashboard biểu đồ Doanh thu / Lãi gộp / Dòng tiền. |
+| **T8** | **Integration Tests & Concurrency Verification** | `codex-local` + `antigravity-cli` | `Tests/**/*` | Kiểm thử tự động toàn bộ luồng Nhập -> Bán -> Hủy -> Đổi size -> Hoàn tiền -> Báo cáo dòng tiền + test 2 request đặt cùng đôi giày cuối cùng không bị âm kho. |
 
 ---
 
-### 3. QUY TRÌNH BÀN GIAO & VẬN HÀNH CHO KHÁCH HÀNG (HANDOVER CHECKLIST)
-Khi hoàn tất 6 giai đoạn trên, sản phẩm bàn giao cho khách hàng kinh doanh sẽ bao gồm:
-1. **Web Bán Hàng (Storefront)**: Khách vào xem giày, chọn size chuẩn tồn kho, ném giày vào giỏ hàng, đặt hàng thanh toán nhanh.
-2. **Hệ Thống Quản Trị Kho (Inventory ERP)**: Kiểm soát số lượng từng size, cảnh báo nhập khi sắp hết hàng, quản lý danh sách nhà cung cấp và lịch sử phiếu nhập.
-3. **Báo Cáo Tài Chính & Dòng Tiền (Cash Flow Center)**: Giúp chủ shop mở máy lên là biết chính xác:
-   - Hôm nay bán được bao nhiêu tiền.
-   - Tiền thực tế đã về túi là bao nhiêu (đã trừ tiền nhập hàng).
-   - Lãi gộp thực tế là bao nhiêu mà không cần thuê kế toán phức tạp.
+### 4. QUY TRÌNH BÀN GIAO VẬN HÀNH
+Sau khi hoàn tất 6 giai đoạn:
+1. **Storefront**: Khách hàng xem giày, lọc theo hãng/size/màu/giá, kiểm tra tồn kho thật, áp voucher, đặt hàng và thanh toán.
+2. **Admin Portal**: Chủ shop/nhân viên đăng nhập quản lý nhập hàng, công nợ NCC, duyệt đơn, xử lý đổi size/hoàn tiền và theo dõi tồn kho cảnh báo.
+3. **Trung tâm Tài chính & Dòng tiền**: Hiển thị minh bạch Doanh thu thuần, Giá vốn, Lãi gộp và Tiền mặt/Ngân hàng thực thu – thực chi.

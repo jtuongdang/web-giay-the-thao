@@ -1,9 +1,9 @@
 # ĐẶC TẢ QUY TRÌNH NGHIỆP VỤ KINH DOANH & CÔNG THỨC DÒNG TIỀN
-## (Business Process Specification: Inventory, Sales & Cash Flow)
+## (Business Process Specification: Inventory, Reservation, RMA, Debt & Cash Flow)
 
 ---
 
-### 1. QUY TRÌNH QUẢN LÝ KHO (INVENTORY LIFECYCLE)
+### 1. QUY TRÌNH NHẬP HÀNG & CÔNG NỢ NHÀ CUNG CẤP
 
 ```mermaid
 sequenceDiagram
@@ -14,84 +14,79 @@ sequenceDiagram
     participant Ledger as Sổ Cái Kho (InventoryTransactions)
     participant Cash as Sổ Quỹ (CashFlowLedger)
 
-    Note over NV,Cash: GIAI ĐOẠN 1: NHẬP HÀNG TỪ NHÀ CUNG CẤP
-    NV->>PO: Tạo Phiếu nhập (NCC, Chọn Giày, Size, Số lượng, Giá nhập)
-    NV->>PO: Xác nhận ĐÃ NHẬP KHO
-    PO->>Stock: Tăng stock_quantity theo từng Size (+Quantity)
-    PO->>Stock: Cập nhật cost_price (Giá vốn mới nhất / Bình quân)
+    NV->>PO: Tạo Phiếu nhập (NCC, Biến thể Size/Màu, SL, Giá nhập, Tiền trả trước)
+    NV->>PO: Xác nhận ĐÃ NHẬP KHO (Received)
+    PO->>Stock: Tăng stock_quantity (+Quantity) & cập nhật cost_price (Bình quân gia quyền)
     PO->>Ledger: Ghi log giao dịch IMPORT (Trước/Sau tồn kho)
-    opt Có thanh toán tiền mặt/chuyển khoản cho NCC
-        PO->>Cash: Ghi phiếu CHI tiền nhập hàng (VoucherType = PAYMENT)
+    PO->>PO: Cộng phần nợ vào Suppliers.current_debt (+= Total - Paid)
+    opt Có thanh toán ngay (paid_amount > 0)
+        PO->>Cash: Ghi phiếu CHI tiền nhập hàng (PAYMENT / SUPPLIER_PAYMENT)
     end
 ```
 
-#### Quy tắc nghiệp vụ kho:
-1. **Kiểm tra tồn kho thời gian thực**: Khi khách bấm "Thêm vào giỏ" hoặc "Đặt hàng", hệ thống kiểm tra `stock_quantity >= quantity` của size đó. Nếu bằng 0 -> Chặn đặt hàng và báo "Hết size".
-2. **Trừ kho khi xác nhận đơn**:
-   - Khi đơn chuyển sang trạng thái `Confirmed` (Đã duyệt đóng gói): Tự động trừ tồn kho (`stock_quantity = stock_quantity - quantity`).
-   - Ghi nhận 1 dòng vào `InventoryTransactions` với loại `EXPORT_SALE` gắn với mã `OrderId`.
-3. **Hủy đơn hoàn kho**: Nếu đơn hàng bị khách hủy trước khi giao hoặc giao thất bại (chuyển trạng thái `Cancelled`), hệ thống tự động cộng ngược tồn kho (`+quantity`) và ghi log `RETURN`.
+#### Công thức tính Giá vốn bình quân gia quyền (Weighted Average Cost):
+$$\text{CostPrice}_{\text{mới}} = \frac{(\text{Stock}_{\text{cũ}} \times \text{CostPrice}_{\text{cũ}}) + (\text{Qty}_{\text{nhập}} \times \text{UnitCost}_{\text{nhập}})}{\text{Stock}_{\text{cũ}} + \text{Qty}_{\text{nhập}}}$$
+
+#### Trả nợ Nhà cung cấp bổ sung (`SupplierPayments`):
+* Khi shop trả thêm tiền nợ cho NCC: giảm `Suppliers.current_debt`, cập nhật `PurchaseOrders.paid_amount` & `payment_status` (`Unpaid -> Partial -> Paid`), đồng thời sinh phiếu chi `PAYMENT / SUPPLIER_PAYMENT` trong `CashFlowLedger`.
 
 ---
 
-### 2. QUY TRÌNH BÁN HÀNG & MÔ PHỎNG THANH TOÁN (SALES & MOCK PAYMENT)
+### 2. QUY TRÌNH GIỮ CHỖ TỒN KHO, ĐẶT HÀNG & STATE MACHINE ĐƠN HÀNG
 
+Để ngăn chặn tuyệt đối tình trạng **2 khách cùng đặt đôi giày cuối cùng (Overselling)**, hệ thống áp dụng cơ chế **Giữ chỗ tồn kho (Stock Reservation)** trong DB Transaction:
+
+1. **Bước Tạo đơn (`Pending`)**:
+   - Kiểm tra `stock_quantity - reserved_quantity >= quantity` trên `ProductVariants` (dùng `ROWVERSION` hoặc `UPDATE ... WHERE (stock_quantity - reserved_quantity) >= @qty`).
+   - Nếu đủ: tăng `reserved_quantity += quantity` ngay lập tức. Nếu không đủ: rollback và báo hết hàng.
+   - Validate và khóa lượt dùng `Voucher` (nếu có).
+2. **Bước Xác nhận đóng gói (`Pending -> Confirmed`)**:
+   - Chuyển giữ chỗ thành xuất kho thật: `stock_quantity -= quantity` và `reserved_quantity -= quantity`.
+   - Ghi 1 dòng vào `InventoryTransactions` loại `EXPORT_SALE`.
+3. **Bước Giao hàng & Hoàn tất (`Confirmed -> Shipping -> Completed`)**:
+   - Với đơn **COD**: Khi `Completed` (đã giao & thu tiền), tự động cập nhật `PaymentStatus = Paid` và ghi phiếu thu `RECEIPT / SALE_REVENUE` vào `CashFlowLedger`.
+   - Với đơn **QR_TRANSFER / MOCK_CARD**: Khi thanh toán thành công, cập nhật `PaymentStatus = Paid` và ghi phiếu thu `RECEIPT / SALE_REVENUE` ngay tại thời điểm thu tiền.
+4. **Bước Hủy đơn (`Cancelled`)**:
+   - Nếu hủy từ `Pending` (chưa xuất kho): chỉ giải phóng giữ chỗ `reserved_quantity -= quantity`.
+   - Nếu hủy từ `Confirmed` hoặc `Shipping` (đã trừ kho): cộng hoàn tồn kho `stock_quantity += quantity`, ghi `InventoryTransactions` loại `RETURN`. Nếu đơn đã `Paid`, tự động sinh phiếu chi `PAYMENT / CUSTOMER_REFUND` và đổi `PaymentStatus = Refunded`.
+
+#### Sơ đồ State Machine hợp lệ cho `order_status`:
 ```mermaid
-sequenceDiagram
-    autonumber
-    actor Khach as Khách Hàng (Storefront)
-    participant Web as Giao diện Web
-    participant Order as Bộ Xử Lý Đơn Hàng
-    participant MockPay as Mô Phỏng Thanh Toán
-    participant Cash as Sổ Quỹ Dòng Tiền
-
-    Khach->>Web: Chọn giày, Chọn Size -> Bấm "Thêm vào giỏ" (Hiệu ứng bay)
-    Khach->>Web: Vào Giỏ hàng -> Áp voucher SNEAKER10 -> Nhập địa chỉ nhận hàng
-    Khach->>Web: Chọn hình thức thanh toán (COD / Chuyển khoản QR / Thẻ mô phỏng)
-    Web->>Order: Gửi yêu cầu đặt hàng (Checkout)
-    Order->>Order: Tạo Đơn hàng mới (OrderStatus = Pending, Không tính thuế)
-    
-    alt Phương thức: Chuyển khoản QR Mock
-        Order->>MockPay: Tạo mã QR Mock với cú pháp "DHxxxxx"
-        MockPay-->>Khach: Hiển thị màn hình QR thanh toán
-        Khach->>MockPay: Bấm "Mô phỏng quét mã & chuyển khoản thành công"
-        MockPay->>Order: Cập nhật PaymentStatus = Paid
-        Order->>Cash: Ghi nhận Phiếu THU tiền đơn hàng ngay tức thì
-    else Phương thức: COD (Giao hàng thu tiền)
-        Order-->>Khach: Thông báo đặt hàng thành công (PaymentStatus = Pending)
-        Note over Khach,Cash: Khi shipper giao hàng thành công & nộp tiền:
-        Order->>Order: Cập nhật OrderStatus = Completed & PaymentStatus = Paid
-        Order->>Cash: Ghi nhận Phiếu THU tiền bán hàng (VoucherType = RECEIPT)
-    end
+stateDiagram-v2
+    [*] --> Pending
+    Pending --> Confirmed: Admin/Staff duyệt đơn (Trừ stock thật)
+    Pending --> Cancelled: Hủy đơn (Nhả reserved_quantity)
+    Confirmed --> Shipping: Bàn giao vận chuyển
+    Confirmed --> Cancelled: Hủy đơn (Hoàn kho + Hoàn tiền nếu Paid)
+    Shipping --> Completed: Giao thành công (COD -> Paid + Cash Inflow)
+    Shipping --> Cancelled: Giao thất bại (Hoàn kho + Hoàn tiền nếu Paid)
 ```
+> **Ràng buộc bắt buộc**: Không cho phép chuyển từ `Cancelled` hoặc `Completed` sang bất kỳ trạng thái nào khác để bảo toàn sổ kho và sổ quỹ.
 
 ---
 
-### 3. CÔNG THỨC TÍNH TOÁN DÒNG TIỀN & BÁO CÁO TÀI CHÍNH KINH DOANH
+### 3. QUY TRÌNH ĐỔI SIZE & TRẢ HÀNG HOÀN TIỀN (RMA)
 
-Mục tiêu tối thượng của chủ shop là kiểm soát được **Doanh thu, Chi phí nhập hàng, Dòng tiền thực tế và Lợi nhuận bỏ túi**.
+Chỉ áp dụng cho đơn hàng đã ở trạng thái `Completed`:
+1. **Đổi Size / Đổi Mẫu (`EXCHANGE`)**:
+   - Kiểm tra biến thể mới còn đủ `AvailableQuantity >= quantity`.
+   - Nếu `is_resellable = true`: cộng `stock_quantity` cho biến thể cũ (`RETURN`), trừ `stock_quantity` biến thể mới (`EXCHANGE_OUT`), ghi đầy đủ 2 dòng vào `InventoryTransactions`.
+   - Nếu có chênh lệch giá (nếu đổi sang mẫu khác): ghi nhận thu thêm (`RECEIPT`) hoặc chi trả lại (`PAYMENT`) vào `CashFlowLedger`.
+2. **Trả hàng hoàn tiền (`REFUND`)**:
+   - Nếu `is_resellable = true`: cộng lại `stock_quantity` và ghi `InventoryTransactions` loại `RETURN`.
+   - Ghi phiếu chi `PAYMENT` (category `CUSTOMER_REFUND`) vào `CashFlowLedger` đúng bằng `refund_amount`.
+   - Cập nhật `Orders.payment_status = Refunded`.
 
-#### 3.1. Giá Vốn Hàng Bán (COGS - Cost of Goods Sold)
-- Đối với mỗi đơn hàng hoàn tất:
-$$\text{COGS}_{\text{order}} = \sum_{i=1}^{n} (\text{UnitCost}_i \times \text{Quantity}_i)$$
-*(Trong đó $\text{UnitCost}_i$ là giá vốn của từng đôi giày được chốt lúc bán).*
+---
 
-#### 3.2. Doanh Thu Thuần (Net Revenue)
-- Bỏ qua hoàn toàn thuế giá trị gia tăng (VAT = 0%):
-$$\text{Doanh thu} = \sum (\text{Đơn giá bán} \times \text{Số lượng}) - \text{Giảm giá Voucher}$$
+### 4. CÔNG THỨC TÀI CHÍNH & DÒNG TIỀN KINH DOANH
 
-#### 3.3. Lợi Nhuận Gộp Kinh Doanh (Gross Profit)
-$$\text{Lợi nhuận gộp} = \text{Doanh thu thuần} - \text{COGS}$$
-$$\text{Tỷ suất lợi nhuận gộp (Gross Margin)} = \frac{\text{Lợi nhuận gộp}}{\text{Doanh thu thuần}} \times 100\%$$
-
-#### 3.4. Dòng Tiền Thực Tế (Cash Flow Management)
-Khác với lợi nhuận trên giấy tờ, dòng tiền là lượng **tiền mặt/tiền tài khoản thực sự chảy vào và chảy ra**:
-- **Dòng tiền vào (Cash Inflow)**: Tổng tất cả các khoản thu tiền bán hàng thực tế đã nhận trong kỳ (các Phiếu Thu `RECEIPT`).
-- **Dòng tiền ra (Cash Outflow)**: Tổng tiền thực chi để thanh toán đơn nhập hàng cho nhà cung cấp trong kỳ (các Phiếu Chi `PAYMENT`).
-- **Dòng tiền thuần (Net Cash Flow)**:
-$$\text{Net Cash Flow} = \text{Tổng Thu Thực Tế (Inflow)} - \text{Tổng Chi Thực Tế (Outflow)}$$
-
-> [!IMPORTANT]
-> **Quy tắc vàng phân biệt Lợi nhuận vs Dòng tiền**:
-> - Nếu bán được 100 đôi giày giá 100 triệu (lãi 30 triệu) nhưng khách mua COD chưa nhận hàng, thì Lợi nhuận kế toán đã phát sinh nhưng **Dòng tiền thực tế vẫn là 0đ**.
-> - Bảng điều khiển tài chính (Financial Dashboard) sẽ hiển thị song song 2 chỉ số: **Lợi nhuận ước tính** và **Số dư dòng tiền thực tế** để chủ shop không bao giờ bị hụt tiền nhập hàng!
+* **Giá vốn hàng bán (COGS)**:
+  $$\text{COGS} = \sum (\text{OrderItem.UnitCost} \times \text{OrderItem.Quantity})$$
+* **Doanh thu thuần (Net Revenue, VAT = 0%)**:
+  $$\text{Doanh thu thuần} = \sum (\text{OrderItem.UnitPrice} \times \text{OrderItem.Quantity}) - \text{DiscountAmount}$$
+* **Lợi nhuận gộp (Gross Profit)**:
+  $$\text{Lợi nhuận gộp} = \text{Doanh thu thuần} - \text{COGS}$$
+* **Dòng tiền thuần (Net Cash Flow)**:
+  $$\text{Net Cash Flow} = \sum \text{Phiếu Thu (RECEIPT)} - \sum \text{Phiếu Chi (PAYMENT)}$$
+  *(Bao gồm chi nhập hàng `SUPPLIER_PAYMENT`, chi hoàn tiền khách `CUSTOMER_REFUND`, chi vận hành `OPERATIONAL_COST`).*

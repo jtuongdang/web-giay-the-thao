@@ -1,42 +1,47 @@
 # HỢP ĐỒNG GIAO DIỆN API (RESTFUL API CONTRACT SPECIFICATION)
-## Giao Tiếp Độc Lập Giữa Frontend (Client) & Backend (API Service)
+## Giao Tiếp Độc Lập Giữa Frontend (Storefront / Admin) & Backend (API Service)
 
 ---
 
 ### 1. QUY CHUẨN GIAO TIẾP CHUNG
-- **Định dạng dữ liệu**: Toàn bộ Request và Response đều sử dụng `application/json` (UTF-8).
-- **Cấu trúc phản hồi chuẩn (Standard JSON Response Envelope)**:
+* **Định dạng dữ liệu**: Toàn bộ Request và Response sử dụng `application/json` (UTF-8).
+* **Phân quyền**:
+  * Các endpoint `/api/v1/products*`, `/api/v1/vouchers/validate`, `POST /api/v1/orders` (Storefront): Public (hoặc gắn `userId` nếu có JWT).
+  * Các endpoint `/api/v1/admin/*` và `POST /api/v1/payments/mock-simulate`: Bắt buộc JWT Bearer / Cookie với role `Admin` hoặc `Staff`.
+* **Cấu trúc phản hồi chuẩn (`ApiResponse<T>`)**:
 ```json
 {
   "success": true,
   "statusCode": 200,
   "message": "Thao tác thành công",
-  "data": { ... },
+  "data": {},
   "errors": null,
-  "timestamp": "2026-11-13T01:00:00Z"
+  "timestamp": "2026-11-13T10:20:00Z"
 }
 ```
 
 ---
 
-### 2. BỘ API DÀNH CHO KHÁCH HÀNG (STOREFRONT APIs)
+### 2. BỘ API XÁC THỰC (AUTH APIs)
+* `POST /api/v1/auth/login`: Đăng nhập bằng `username`/`email` + `password`, trả về JWT token + thông tin user (`role`).
+* `POST /api/v1/auth/register`: Đăng ký tài khoản `Customer`.
+* `GET /api/v1/auth/me` `[Authorize]`: Lấy thông tin phiên đăng nhập hiện tại.
 
-#### 2.1. Tra cứu danh sách sản phẩm
-- **Endpoint**: `GET /api/v1/products`
-- **Query Params**:
-  - `brand`: Nike, Adidas, Jordan, Puma
-  - `size`: 39, 40, 41, 42, 43, 44
-  - `search`: Tên giày
-  - `minPrice`, `maxPrice`: Khoảng giá lọc
-  - `pageIndex`, `pageSize`: Phân trang
-- **Mô tả**: Trả về danh sách thẻ giày kèm thông tin tồn kho tổng quan.
+---
 
-#### 2.2. Xem chi tiết giày & biến thể size tồn kho
-- **Endpoint**: `GET /api/v1/products/{id}`
-- **Mẫu dữ liệu trả về**:
+### 3. BỘ API KHÁCH HÀNG (STOREFRONT APIs)
+
+#### 3.1. Tra cứu danh sách sản phẩm
+* `GET /api/v1/products`
+* **Query Params**: `brand`, `size`, `color`, `search`, `minPrice`, `maxPrice`, `pageIndex`, `pageSize`.
+
+#### 3.2. Xem chi tiết giày & biến thể size/màu tồn kho
+* `GET /api/v1/products/{id}`
+* **Mẫu `data` trả về**:
 ```json
 {
   "id": 1,
+  "sku": "NIKE-AJ1-CHI",
   "name": "Nike Air Jordan 1 High OG Chicago",
   "brand": "Jordan",
   "category": "Bóng rổ",
@@ -44,16 +49,34 @@
   "originalPrice": 5800000,
   "imageUrl": "https://images.unsplash.com/...",
   "variants": [
-    { "variantId": 101, "size": 39, "inStock": true, "availableQuantity": 12 },
-    { "variantId": 102, "size": 40, "inStock": true, "availableQuantity": 5 },
-    { "variantId": 103, "size": 41, "inStock": false, "availableQuantity": 0 }
+    {
+      "variantId": 101,
+      "size": 39,
+      "color": "Chicago Red/White",
+      "imageUrl": null,
+      "inStock": true,
+      "availableQuantity": 12
+    },
+    {
+      "variantId": 102,
+      "size": 41,
+      "color": "Chicago Red/White",
+      "imageUrl": null,
+      "inStock": false,
+      "availableQuantity": 0
+    }
   ]
 }
 ```
 
-#### 2.3. Đặt hàng (Checkout)
-- **Endpoint**: `POST /api/v1/orders`
-- **Body**:
+#### 3.3. Kiểm tra mã giảm giá (Voucher Validation)
+* `POST /api/v1/vouchers/validate`
+* **Body**: `{ "code": "SNEAKER10", "subtotal": 5200000 }`
+* **Response**: Trả về `isValid`, `discountAmount`, `finalSubtotal`, `message`.
+
+#### 3.4. Đặt hàng (Checkout & Stock Reservation)
+* `POST /api/v1/orders`
+* **Body**:
 ```json
 {
   "customerName": "Đặng Gia Tường",
@@ -66,47 +89,37 @@
   ]
 }
 ```
-- **Response**: Trả về `orderCode`, số tiền cần thanh toán (không thuế), và dữ liệu QR thanh toán mô phỏng.
+* **Hành vi**: Giữ chỗ tồn kho (`reserved_quantity += quantity`) trong transaction. Trả về `orderCode`, `totalAmount` (VAT = 0), và dữ liệu QR mô phỏng nếu `paymentMethod == "QR_TRANSFER"`.
 
-#### 2.4. Mô phỏng xác nhận thanh toán (Mock Payment Simulator)
-- **Endpoint**: `POST /api/v1/payments/mock-simulate`
-- **Body**:
-```json
-{
-  "orderCode": "DH-20261113-001",
-  "status": "SUCCESS" // hoặc "FAILED"
-}
-```
+#### 3.5. Mô phỏng xác nhận thanh toán `[Authorize(Roles = "Admin,Staff")]`
+* `POST /api/v1/payments/mock-simulate`
+* **Body**: `{ "orderCode": "DH-20261113-001", "status": "SUCCESS" }`
 
 ---
 
-### 3. BỘ API QUẢN TRỊ KHO & DÒNG TIỀN (ADMIN / BACKOFFICE APIs)
+### 4. BỘ API QUẢN TRỊ KHO, ĐỔI TRẢ & DÒNG TIỀN (`[Authorize(Roles = "Admin,Staff")]`)
 
-#### 3.1. Quản lý kho hàng & cảnh báo tồn kho
-- `GET /api/v1/admin/inventory`: Danh sách tất cả biến thể, số lượng tồn kho vật lý, giá vốn hiện tại, cờ cảnh báo `isLowStock` (khi tồn $\le$ `minStockAlert`).
-- `GET /api/v1/admin/inventory/transactions`: Lịch sử biến động xuất nhập tồn kho.
+#### 4.1. Quản lý kho & cảnh báo tồn kho
+* `GET /api/v1/admin/inventory`: Danh sách biến thể kèm `stockQuantity`, `reservedQuantity`, `availableQuantity`, `costPrice`, `isLowStock`.
+* `GET /api/v1/admin/inventory/transactions`: Lịch sử sổ cái kho (`InventoryTransactions`).
+* `POST /api/v1/admin/inventory/adjust`: Kiểm kê/điều chỉnh tồn kho thủ công (ghi log `ADJUSTMENT`).
 
-#### 3.2. Nhập hàng từ Nhà cung cấp (Purchase Orders)
-- `POST /api/v1/admin/purchase-orders`: Tạo phiếu nhập hàng (Chọn Nhà cung cấp, danh sách giày, size, số lượng, giá vốn nhập).
-- `POST /api/v1/admin/purchase-orders/{id}/receive`:
-  - **Hành động**: Xác nhận hàng thực tế đã về kho.
-  - **Hậu quả hệ thống**:
-    1. Tăng tồn kho `stock_quantity` của từng size.
-    2. Ghi nhật ký vào `InventoryTransactions`.
-    3. Nếu có thanh toán ngay, tự động sinh phiếu chi trong `CashFlowLedger`.
+#### 4.2. Nhà cung cấp, Nhập hàng & Trả nợ (PO & Accounts Payable)
+* `GET /api/v1/admin/suppliers` & `POST /api/v1/admin/suppliers`: Quản lý danh bạ NCC và xem `currentDebt`.
+* `POST /api/v1/admin/suppliers/{id}/payments`: Ghi nhận trả nợ NCC -> giảm `currentDebt`, cập nhật PO và sinh phiếu chi `CashFlowLedger`.
+* `POST /api/v1/admin/purchase-orders`: Tạo phiếu nhập hàng.
+* `POST /api/v1/admin/purchase-orders/{id}/receive`: Xác nhận nhập kho -> tăng `stock_quantity`, tính lại giá vốn bình quân, ghi sổ kho `IMPORT`, cập nhật nợ/phiếu chi.
 
-#### 3.3. Xử lý đơn hàng & xuất kho
-- `GET /api/v1/admin/orders`: Quản lý danh sách đơn hàng.
-- `PATCH /api/v1/admin/orders/{id}/status`: Đổi trạng thái (`Confirmed` -> Trừ kho; `Completed` -> Ghi nhận dòng tiền thu nếu là COD; `Cancelled` -> Hoàn kho).
+#### 4.3. Xử lý đơn hàng & Đổi trả (Orders & RMA)
+* `GET /api/v1/admin/orders`: Danh sách đơn hàng (lọc theo trạng thái, ngày, SĐT).
+* `PATCH /api/v1/admin/orders/{id}/status`: Chuyển trạng thái theo State Machine (`Confirmed` / `Shipping` / `Completed` / `Cancelled`).
+* `POST /api/v1/admin/returns`: Tạo & xử lý yêu cầu Đổi size (`EXCHANGE`) hoặc Hoàn tiền (`REFUND`) cho đơn `Completed`.
 
-#### 3.4. Báo cáo Dòng tiền & Tài chính kinh doanh (Cash Flow & Financial Analytics)
-- `GET /api/v1/admin/finance/summary`:
-  - Trả về KPI tổng hợp:
-    - **Tổng Doanh thu (Total Revenue)**
-    - **Tổng Giá vốn hàng bán (Total COGS)**
-    - **Lợi nhuận gộp (Gross Profit = Revenue - COGS)**
-    - **Tổng Tiền thực thu (Cash Inflow)**
-    - **Tổng Tiền thực chi (Cash Outflow)**
-    - **Dòng tiền thuần (Net Cash Flow = Cash In - Cash Out)**
-- `GET /api/v1/admin/finance/cash-ledger`: Sổ quỹ chi tiết toàn bộ các phiếu Thu và phiếu Chi phát sinh.
-- `GET /api/v1/admin/finance/charts`: Dữ liệu chuỗi thời gian (Time-series) vẽ biểu đồ đường/cột cho Frontend Admin Portal (Doanh thu theo ngày, Lãi gộp theo ngày, Dòng tiền thu/chi).
+#### 4.4. Quản lý Voucher
+* `GET /api/v1/admin/vouchers`, `POST /api/v1/admin/vouchers`, `PATCH /api/v1/admin/vouchers/{id}`: Tạo, sửa, bật/tắt mã khuyến mãi.
+
+#### 4.5. Báo cáo Dòng tiền & Tài chính (`Cash Flow & Financial Analytics`)
+* `GET /api/v1/admin/finance/summary`: Tổng Doanh thu thuần, Tổng COGS, Lợi nhuận gộp, Tổng Tiền thực thu (`CashInflow`), Tổng Tiền thực chi (`CashOutflow`), Dòng tiền thuần (`NetCashFlow`), Tổng Công nợ NCC.
+* `GET /api/v1/admin/finance/cash-ledger`: Sổ quỹ chi tiết các phiếu Thu/Chi (`CashFlowLedger`).
+* `POST /api/v1/admin/finance/cash-ledger`: Tạo phiếu thu/chi vận hành thủ công (`OPERATIONAL_COST`, v.v.).
+* `GET /api/v1/admin/finance/charts`: Chuỗi thời gian (Doanh thu, Lãi gộp, Thu/Chi theo ngày/tuần/tháng).
